@@ -198,7 +198,7 @@
 
     function renderIconBadge(badgeId) {
       const def = ICON_BADGES.find(b => b.id === badgeId);
-      if (!def) return '';
+      if (!def) return '<div class="ach-badge-empty"></div>';
       return `<img src="${def.path}" class="ladder-icon-badge" alt="">`;
     }
 

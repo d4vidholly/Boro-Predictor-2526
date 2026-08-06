@@ -58,7 +58,7 @@ td.center { text-align: center; }
 .rank-arrow.down { color: var(--red-dark); }
 .player-name-wrap { display: flex; align-items: center; gap: 0.4rem; }
 .player-name { font-weight: 700; color: var(--black); }
-.ladder-icon-badge { width: 22px; height: 22px; flex-shrink: 0; }
+.ladder-icon-badge { width: 26px; height: 26px; flex-shrink: 0; }
 .points-cell { font-family: var(--font-display); font-size: 1.05rem; font-weight: 800; color: var(--black); }
 .num { font-variant-numeric: tabular-nums; }
 
