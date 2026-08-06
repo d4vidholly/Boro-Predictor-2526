@@ -171,7 +171,7 @@
     async function sendLoginLink(email) {
       const { error } = await sb.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: REDIRECT_TO, shouldCreateUser: false }
+        options: { emailRedirectTo: REDIRECT_TO, shouldCreateUser: true }
       });
       if (error) throw error;
     }
