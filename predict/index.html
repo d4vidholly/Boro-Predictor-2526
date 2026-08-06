@@ -622,6 +622,13 @@
     await loadPredictionsFromDB();
     restoreScoreDisplay();
     setupClearButton();
+
+    sb.auth.onAuthStateChange((event, newSession) => {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && !currentUser) {
+        currentUser = newSession?.user ?? null;
+        loadPredictionsFromDB();
+      }
+    });
   }
 
   document.addEventListener('DOMContentLoaded', init);
