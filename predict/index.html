@@ -414,6 +414,8 @@
     updateFixtureColor(index);
     saveScoresToLocal();
     hasUnsavedChanges = true;
+    const saveBtn = document.querySelector('.action-btn--primary');
+    if (saveBtn && saveBtn.textContent === 'Saved ✓') saveBtn.textContent = 'Save';
   }
 
   function updateFixtureColor(index) {
@@ -498,8 +500,8 @@
 
     document.body.classList.add('predictions-saved');
     hasUnsavedChanges = false;
-    btn.textContent = 'Saved!';
-    setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1200);
+    btn.textContent = 'Saved ✓';
+    btn.disabled = false;
   }
 
   // ---------- Report / Gazette ----------

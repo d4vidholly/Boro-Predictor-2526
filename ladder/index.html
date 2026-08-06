@@ -155,8 +155,8 @@
 
         tr.innerHTML = `
           <td class="rank ${rankClass}">${rank}${arrowHtml}</td>
-          <td class="badge-col">${row?.display_badge ? renderAchBadge(row.display_badge) : '<div class="ach-badge-empty"></div>'}</td>
-          <td><div class="player-name-wrap">${row?.team_name ? renderIconBadge(row.team_name) : ''}<span class="player-name">${row ? escHtml(row.name || '—') : '—'}</span></div></td>
+          <td class="badge-col">${row?.team_name ? renderIconBadge(row.team_name) : (row?.display_badge ? renderAchBadge(row.display_badge) : '<div class="ach-badge-empty"></div>')}</td>
+          <td><span class="player-name">${row ? escHtml(row.name || '—') : '—'}</span></td>
           <td class="right num hide-mobile">${row?.played ?? '—'}</td>
           <td class="right num hide-mobile">${row?.goals_for ?? '—'}</td>
           <td class="right num hide-mobile">${row?.goals_away ?? '—'}</td>

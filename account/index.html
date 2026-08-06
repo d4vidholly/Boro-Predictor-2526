@@ -301,13 +301,18 @@
 
     const { data, error } = await sb
       .from('players')
-      .select('name')
+      .select('name, team_name')
       .eq('id', currentUser.id)
       .single();
 
     if (error || !data) return;
 
     if (data.name) document.getElementById('name-input').value = data.name;
+    if (data.team_name) {
+      selectedBadge = data.team_name;
+      localStorage.setItem('boroBadge', selectedBadge);
+      renderTeamIcon();
+    }
   }
 
   // ── LOAD STATUS ──
