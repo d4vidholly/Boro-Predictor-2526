@@ -149,99 +149,134 @@
   let currentUser = null;
 
   const SHORT_NAMES = {
-    "Sheffield Wednesday": "Sheff Wed",
-    "Sheffield United":    "Sheff Utd",
-    "Preston North End":   "Preston NE",
-    "Charlton Athletic":   "Charlton",
-    "Blackburn Rovers":    "Blackburn",
-    "Birmingham City":     "Birmingham",
-    "Leicester City":      "Leicester",
-    "Norwich City":        "Norwich",
-    "Coventry City":       "Coventry",
-    "Oxford United":       "Oxford Utd",
-    "Bristol City":        "Bristol C",
-    "Swansea City":        "Swansea",
-    "Ipswich Town":        "Ipswich",
-    "Stoke City":          "Stoke",
-    "Hull City":           "Hull",
+    "Sheffield United":          "Sheff Utd",
+    "Preston North End":         "Preston NE",
+    "Charlton Athletic":         "Charlton",
+    "Blackburn Rovers":          "Blackburn",
+    "Birmingham City":           "Birmingham",
+    "Norwich City":              "Norwich",
+    "Bristol City":              "Bristol C",
+    "Swansea City":              "Swansea",
+    "Stoke City":                "Stoke",
+    "Bolton Wanderers":          "Bolton",
+    "Cardiff City":              "Cardiff",
+    "Lincoln City":              "Lincoln",
+    "West Ham United":           "West Ham",
+    "Wolverhampton Wanderers":   "Wolves",
   };
   function shortName(n) { return SHORT_NAMES[n] || n; }
 
+  const stadiums = {
+    "Middlesbrough":             "Riverside Stadium",
+    "Blackburn Rovers":          "Ewood Park",
+    "Birmingham City":           "St Andrew's",
+    "Bolton Wanderers":          "Toughsheet Community Stadium",
+    "Bristol City":              "Ashton Gate",
+    "Burnley":                   "Turf Moor",
+    "Cardiff City":              "Cardiff City Stadium",
+    "Charlton Athletic":         "The Valley",
+    "Derby County":              "Pride Park Stadium",
+    "Lincoln City":              "LNER Stadium",
+    "Millwall":                  "The Den",
+    "Norwich City":              "Carrow Road",
+    "Portsmouth":                "Fratton Park",
+    "Preston North End":         "Deepdale",
+    "QPR":                       "Loftus Road",
+    "Sheffield United":          "Bramall Lane",
+    "Southampton":               "St Mary's Stadium",
+    "Stoke City":                "bet365 Stadium",
+    "Swansea City":              "Swansea.com Stadium",
+    "Watford":                   "Vicarage Road",
+    "West Brom":                 "The Hawthorns",
+    "West Ham United":           "London Stadium",
+    "Wolverhampton Wanderers":   "Molineux",
+    "Wrexham":                   "Racecourse Ground",
+  };
+
   const teams = {
-    "Middlesbrough": "../assets/badges/middlesbrough.svg",
-    "Swansea City": "../assets/badges/swansea.svg",
-    "Derby County": "../assets/badges/derby.svg",
-    "Portsmouth": "../assets/badges/portsmouth.svg",
-    "Preston North End": "../assets/badges/preston.svg",
-    "Stoke City": "../assets/badges/stokecity.svg",
-    "West Brom": "../assets/badges/westbrom.svg",
-    "Watford": "../assets/badges/watford.svg",
-    "Bristol City": "../assets/badges/bristolcity.svg",
-    "Sheffield United": "../assets/badges/sheffieldutd.svg",
-    "Norwich City": "../assets/badges/norwich.svg",
-    "Coventry City": "../assets/badges/coventry.svg",
-    "QPR": "../assets/badges/qpr.svg",
-    "Millwall": "../assets/badges/millwall.svg",
-    "Oxford United": "../assets/badges/oxfordunited.svg",
-    "Blackburn Rovers": "../assets/badges/blackburn.svg",
-    "Hull City": "../assets/badges/hull.svg",
-    "Birmingham City": "../assets/badges/birmingham.svg",
-    "Leeds United": "../assets/badges/leeds.svg",
-    "Southampton": "../assets/badges/southampton.svg",
-    "Leicester City": "../assets/badges/leicestercity.svg",
-    "Wrexham": "../assets/badges/wrexham.svg",
-    "Sheffield Wednesday": "../assets/badges/wednesday.svg",
-    "Ipswich Town": "../assets/badges/ipswich.svg",
-    "Charlton Athletic": "../assets/badges/charlton.svg"
+    "Middlesbrough":             "../assets/badges/middlesbrough.svg",
+    "Blackburn Rovers":          "../assets/badges/blackburn.svg",
+    "Birmingham City":           "../assets/badges/birmingham.svg",
+    "Bolton Wanderers":          "../assets/badges/bolton.svg",
+    "Bristol City":              "../assets/badges/bristolcity.svg",
+    "Burnley":                   "../assets/badges/burnley.svg",
+    "Cardiff City":              "../assets/badges/cardiff.svg",
+    "Charlton Athletic":         "../assets/badges/charlton.svg",
+    "Derby County":              "../assets/badges/derby.svg",
+    "Lincoln City":              "../assets/badges/lincoln.svg",
+    "Millwall":                  "../assets/badges/millwall.svg",
+    "Norwich City":              "../assets/badges/norwich.svg",
+    "Portsmouth":                "../assets/badges/portsmouth.svg",
+    "Preston North End":         "../assets/badges/preston.svg",
+    "QPR":                       "../assets/badges/qpr.svg",
+    "Sheffield United":          "../assets/badges/sheffieldutd.svg",
+    "Southampton":               "../assets/badges/southampton.svg",
+    "Stoke City":                "../assets/badges/stokecity.svg",
+    "Swansea City":              "../assets/badges/swansea.svg",
+    "Watford":                   "../assets/badges/watford.svg",
+    "West Brom":                 "../assets/badges/westbrom.svg",
+    "West Ham United":           "../assets/badges/westham.svg",
+    "Wolverhampton Wanderers":   "../assets/badges/wolves.svg",
+    "Wrexham":                   "../assets/badges/wrexham.svg",
   };
 
   const fixtures = [
-    { home: "Middlesbrough", away: "Swansea City", date: "9/8/25" },
-    { home: "Millwall", away: "Middlesbrough", date: "16/8/25" },
-    { home: "Norwich City", away: "Middlesbrough", date: "23/8/25" },
-    { home: "Middlesbrough", away: "Sheffield United", date: "30/8/25" },
-    { home: "Preston North End", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "West Brom", date: "30/8/25" },
-    { home: "Southampton", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Stoke City", date: "30/8/25" },
-    { home: "Portsmouth", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Ipswich Town", date: "30/8/25" },
-    { home: "Sheffield Wednesday", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Wrexham", date: "30/8/25" },
-    { home: "Watford", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Leicester City", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Birmingham City", date: "30/8/25" },
-    { home: "Oxford United", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Coventry City", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Derby County", date: "30/8/25" },
-    { home: "Hull City", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Charlton Athletic", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "QPR", date: "30/8/25" },
-    { home: "Bristol City", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Blackburn Rovers", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Hull City", date: "30/8/25" },
-    { home: "Derby County", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Southampton", date: "30/8/25" },
-    { home: "West Brom", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Stoke City", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Preston North End", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Norwich City", date: "30/8/25" },
-    { home: "Sheffield United", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Coventry City", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Oxford United", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Leicester City", date: "30/8/25" },
-    { home: "Birmingham City", away: "Middlesbrough", date: "30/8/25" },
-    { home: "QPR", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Charlton Athletic", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Bristol City", date: "30/8/25" },
-    { home: "Blackburn Rovers", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Millwall", date: "30/8/25" },
-    { home: "Swansea City", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Portsmouth", date: "30/8/25" },
-    { home: "Ipswich Town", away: "Middlesbrough", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Sheffield Wednesday", date: "30/8/25" },
-    { home: "Middlesbrough", away: "Watford", date: "30/8/25" },
-    { home: "Wrexham", away: "Middlesbrough", date: "30/8/25" }
+    // August
+    { home: "Middlesbrough",           away: "Lincoln City",              date: "15/8/26",  kickoff: "15:00" },
+    { home: "Blackburn Rovers",        away: "Middlesbrough",             date: "22/8/26",  kickoff: "15:00" },
+    { home: "Middlesbrough",           away: "West Brom",                 date: "29/8/26"  },
+    // September
+    { home: "Burnley",                 away: "Middlesbrough",             date: "2/9/26",   kickoff: "19:45" },
+    { home: "QPR",                     away: "Middlesbrough",             date: "5/9/26"   },
+    { home: "Middlesbrough",           away: "Millwall",                  date: "8/9/26"   },
+    { home: "Middlesbrough",           away: "Norwich City",              date: "12/9/26"  },
+    { home: "Birmingham City",         away: "Middlesbrough",             date: "19/9/26"  },
+    // October
+    { home: "Middlesbrough",           away: "Wolverhampton Wanderers",   date: "10/10/26" },
+    { home: "Stoke City",              away: "Middlesbrough",             date: "13/10/26" },
+    { home: "Middlesbrough",           away: "Cardiff City",              date: "17/10/26" },
+    { home: "Bolton Wanderers",        away: "Middlesbrough",             date: "24/10/26" },
+    { home: "Middlesbrough",           away: "Charlton Athletic",         date: "31/10/26" },
+    // November
+    { home: "Wrexham",                 away: "Middlesbrough",             date: "4/11/26"  },
+    { home: "Watford",                 away: "Middlesbrough",             date: "7/11/26"  },
+    { home: "Middlesbrough",           away: "Bristol City",              date: "21/11/26" },
+    { home: "Middlesbrough",           away: "Swansea City",              date: "24/11/26" },
+    { home: "Southampton",             away: "Middlesbrough",             date: "28/11/26" },
+    // December
+    { home: "Middlesbrough",           away: "Derby County",              date: "5/12/26"  },
+    { home: "West Ham United",         away: "Middlesbrough",             date: "8/12/26"  },
+    { home: "Preston North End",       away: "Middlesbrough",             date: "12/12/26" },
+    { home: "Middlesbrough",           away: "Portsmouth",                date: "19/12/26", kickoff: "15:00" },
+    { home: "Sheffield United",        away: "Middlesbrough",             date: "26/12/26", kickoff: "15:00" },
+    { home: "Middlesbrough",           away: "Bolton Wanderers",          date: "29/12/26" },
+    // January
+    { home: "Middlesbrough",           away: "Preston North End",         date: "1/1/27",   kickoff: "15:00" },
+    { home: "Cardiff City",            away: "Middlesbrough",             date: "16/1/27"  },
+    { home: "Charlton Athletic",       away: "Middlesbrough",             date: "23/1/27"  },
+    { home: "Middlesbrough",           away: "Wrexham",                   date: "27/1/27",  kickoff: "19:45" },
+    { home: "Middlesbrough",           away: "Watford",                   date: "30/1/27"  },
+    // February
+    { home: "Bristol City",            away: "Middlesbrough",             date: "6/2/27"   },
+    { home: "Norwich City",            away: "Middlesbrough",             date: "13/2/27"  },
+    { home: "Middlesbrough",           away: "Stoke City",                date: "17/2/27"  },
+    { home: "Middlesbrough",           away: "Birmingham City",           date: "20/2/27"  },
+    { home: "Wolverhampton Wanderers", away: "Middlesbrough",             date: "27/2/27"  },
+    // March
+    { home: "Middlesbrough",           away: "Blackburn Rovers",          date: "2/3/27"   },
+    { home: "Lincoln City",            away: "Middlesbrough",             date: "6/3/27"   },
+    { home: "Middlesbrough",           away: "Southampton",               date: "13/3/27"  },
+    { home: "Derby County",            away: "Middlesbrough",             date: "16/3/27"  },
+    { home: "Middlesbrough",           away: "Sheffield United",          date: "20/3/27"  },
+    // April
+    { home: "Portsmouth",              away: "Middlesbrough",             date: "3/4/27"   },
+    { home: "Millwall",                away: "Middlesbrough",             date: "6/4/27"   },
+    { home: "Middlesbrough",           away: "QPR",                       date: "10/4/27"  },
+    { home: "West Brom",               away: "Middlesbrough",             date: "17/4/27"  },
+    { home: "Middlesbrough",           away: "Burnley",                   date: "20/4/27"  },
+    { home: "Middlesbrough",           away: "West Ham United",           date: "24/4/27"  },
+    // May
+    { home: "Swansea City",            away: "Middlesbrough",             date: "1/5/27",   kickoff: "12:30" },
   ];
 
   const scores = Array.from({ length: fixtures.length }, () => ({ home: 0, away: 0 }));
@@ -276,8 +311,12 @@
           <div class="card-header-left">
             <span>EFL Championship</span>
             <strong>Matchday ${index + 1}</strong>
+            <span class="card-stadium">${stadiums[fixture.home] ?? 'TBC'}</span>
           </div>
-          <span class="card-date">${fixture.date}</span>
+          <div class="card-header-right">
+            <span class="card-date">${fixture.date}</span>
+            <span class="card-kickoff">${fixture.kickoff ?? 'TBC'}</span>
+          </div>
         </div>
         <div class="card-body">
           <div class="team">
@@ -309,8 +348,8 @@
 
   function renderFixtures() {
     const monthDividers = {
-      0: 'August', 4: 'September', 8: 'October', 12: 'November',
-      18: 'December', 24: 'January', 30: 'February', 35: 'March',
+      0: 'August', 3: 'September', 8: 'October', 13: 'November',
+      18: 'December', 24: 'January', 29: 'February', 34: 'March',
       39: 'April', 45: 'May'
     };
 
@@ -385,7 +424,7 @@
     const clearBtn = document.getElementById('clearScoresBtn');
     if (!clearBtn) return;
 
-    clearBtn.addEventListener('click', () => {
+    clearBtn.addEventListener('click', async () => {
       if (!confirm('Are you sure you want to clear all predictions?')) return;
 
       localStorage.removeItem('boroScores');
@@ -396,19 +435,48 @@
       }
 
       restoreScoreDisplay();
+      document.body.classList.remove('predictions-saved');
+
+      if (currentUser) {
+        await sb.from('predictions').delete().eq('player_id', currentUser.id);
+      }
+
       alert('All predictions have been cleared.');
     });
   }
 
   // ---------- Save ----------
 
-  function savePredictions() {
-    saveScoresToLocal();
-    document.body.classList.add('predictions-saved');
+  async function savePredictions() {
     const btn = document.querySelector('.action-btn--primary');
     const original = btn.textContent;
-    btn.textContent = 'Saved!';
+
+    if (!currentUser) return;
+
     btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    saveScoresToLocal();
+
+    const rows = scores.map((s, i) => ({
+      player_id: currentUser.id,
+      fixture_index: i,
+      home_goals: s.home,
+      away_goals: s.away
+    }));
+
+    const { error } = await sb
+      .from('predictions')
+      .upsert(rows, { onConflict: 'player_id,fixture_index' });
+
+    if (error) {
+      btn.textContent = 'Error — try again';
+      setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);
+      return;
+    }
+
+    document.body.classList.add('predictions-saved');
+    btn.textContent = 'Saved!';
     setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1200);
   }
 
@@ -494,14 +562,45 @@
     if (isOpen) modal.querySelector('.close-button').focus();
   }
 
+  // ---------- Load from Supabase ----------
+
+  async function loadPredictionsFromDB() {
+    if (!currentUser) {
+      loadScoresFromLocal();
+      return;
+    }
+    const { data, error } = await sb
+      .from('predictions')
+      .select('fixture_index, home_goals, away_goals')
+      .eq('player_id', currentUser.id);
+
+    if (error || !data || data.length === 0) {
+      loadScoresFromLocal();
+      return;
+    }
+
+    data.forEach(row => {
+      if (scores[row.fixture_index]) {
+        scores[row.fixture_index] = { home: row.home_goals, away: row.away_goals };
+      }
+    });
+    document.body.classList.add('predictions-saved');
+    saveScoresToLocal();
+  }
+
   // ---------- Init ----------
 
-  document.addEventListener('DOMContentLoaded', () => {
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    currentUser = session?.user ?? null;
+
     renderFixtures();
-    loadScoresFromLocal();
+    await loadPredictionsFromDB();
     restoreScoreDisplay();
     setupClearButton();
-  });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
 </script>
 
 </body>

@@ -4,25 +4,40 @@
 
 | Date | Milestone |
 |---|---|
-| ~Mid June 2026 | EFL Championship 2026/27 fixtures released |
-| 25 June 2026 | Fixture data live, predictor page open |
+| ✅ ~Mid June 2026 | EFL Championship 2026/27 fixtures released |
+| ✅ 25 June 2026 | Fixture data live, predictor page open |
 | 14 August 2026 | Season starts — predictions locked |
 
 ---
 
-## Phase 1 — Fixture Data (before June 25)
+## Phase 1 — Fixture Data ✅ Complete
 
-- EFL releases 2026/27 Championship fixtures mid-June
-- Pull via football API (football-data.org or API-Football) — one-time upsert into Supabase `fixtures` table
-- Update `predict/index.html` to load fixtures from Supabase rather than hardcoded JS array
-- Confirm 24 teams for 2026/27 (promotions/relegations) — add/remove badges in `assets/badges/`
-- Recalculate month divider index map once real dates are in
+- ✅ EFL released 2026/27 Championship fixtures 25 June 2026
+- ✅ 24 teams confirmed — 6 new teams in (Bolton, Burnley, Cardiff, Lincoln, West Ham, Wolves); 6 out (Coventry, Hull, Ipswich, Leicester, Oxford Utd, Sheff Wed)
+- ✅ Placeholder badges created for all 6 new teams in `assets/badges/` — replace with official SVGs before launch
+- ✅ `predict/index.html` — fixtures array updated with all 46 real dates, teams map and SHORT_NAMES updated, month divider index map recalculated
+- ✅ `dashboard/index.html` — same fixtures, teams map, and SHORT_NAMES updated to match
+- ✅ Stadium added to each fixture (Riverside Stadium for home, real away ground names confirmed)
+- ✅ Kick-off times added where confirmed (8 fixtures); rest show TBC pending TV selections
+- ⬜ Upsert real fixture dates into Supabase `fixtures` table (currently DB has placeholder dates — not blocking for launch but needed for `dashboard` next-fixture logic to work correctly)
+- ⬜ Replace placeholder badges with official SVGs for Bolton, Burnley, Cardiff, Lincoln, West Ham, Wolves
+- ⬜ Update remaining kick-off times as Sky Sports confirms TV picks (typically 4–6 weeks out)
 
-## Phase 2 — Open the App (June 25 → August 14)
+## Phase 2 — Open the App (now → August 14)
 
-- Waitlist users can log in and access `predict/`
-- Verify magic-link → player creation → predict → save flow end to end
-- Set `predictions_locked = false` in Supabase settings
+- ⬜ Verify magic-link → player creation → predict → save flow end to end (testing in progress)
+- ⬜ Confirm `predictions_locked = false` in Supabase settings table
+- ⬜ Confirm Supabase auth redirect URLs include `https://www.boropredictor.com/**`
+- ⬜ Invite waitlist users
+
+## Recent UI Changes (August 2026)
+
+- Auth redirects removed — all pages accessible without login; Supabase features degrade gracefully
+- Colour tokens updated: `--red` → `#F8444A`, `--gold` → `#F2D054`, navbar `--brand-dark` → `#F71538`
+- Predict page: match cards now show stadium and kick-off time
+- Dashboard: upcoming fixture shows kick-off time and stadium
+- Analyst gate modal title changed to "Coming Soon"
+- Account page: badge picker redesigned — 5 custom SVG icons in Team Information card, clicking the icon opens a modal to choose; display name and badge persist via localStorage
 
 ## Phase 3 — Lock & Run (August 14 onwards)
 
@@ -207,7 +222,24 @@ Achievement badge slot is empty until earned. Once multiple badges are held, pla
 
 ## Newsletter Stack
 
-- **Resend** — integrates natively with Supabase, supports audience segmentation
-- **Supabase Edge Function** — scheduled weekly, queries `results` for that week's scores + `ladder` for standings
+- **Brevo** — chosen tool. Free at current scale (~50 users). HTML editor, unsubscribe handling, audience segmentation, and native Supabase integration to sync `waitlist` and `players` tables as separate audiences.
+- ⬜ Set up Brevo account and verify `boropredictor.com` sending domain
+- ⬜ Connect Supabase → Brevo: sync `waitlist` table as one audience, `players` table as another
+- ⬜ **Wireframe the email layout** before building in Brevo — long-scroll HTML email with custom background, Boro Predictor branding (red/black, Barlow Condensed), badge/imagery blocks
+
+### Email Sequence
+
+| # | Email | Audience | Timing |
+|---|---|---|---|
+| 1 | Fixtures are out — here's the link, forward to mates | Waitlist | Now |
+| 2 | Site is live — sign up and lock in your predictions | Waitlist | Once auth flow verified |
+| 3 | Analyst tier — here's what you get | Players | Mid-July |
+| 4 | One week to go — predictions close Aug 14 | Players | ~Aug 7 |
+| 5 | Final hours — lock in tonight | Players | Aug 13 |
+| 6 | We're live — first results coming | Players | Aug 14 |
+| 7 | Weekly newsletter | Players | Every Monday in-season |
+
+### Weekly Newsletter (in-season)
+- Supabase Edge Function — scheduled weekly, queries `results` for that week's scores + `ladder` for standings, posts to Brevo API
 - `newsletter_opt_in BOOLEAN DEFAULT TRUE` column on `players` table
 - Subscription toggle in `account/index.html`

@@ -314,6 +314,44 @@ button.avatar-wrap {
   line-height: 1.5;
 }
 
+/* ── TEAM INFO ── */
+.team-info-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.team-icon-btn {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  background: var(--off-white);
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  padding: 0;
+}
+
+.team-icon-btn:hover { border-color: var(--red); background: var(--white); }
+
+.team-icon-img {
+  width: 72px;
+  height: 72px;
+  display: block;
+}
+
+.team-icon-placeholder {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.75rem;
+  color: #ccc;
+}
+
 /* ── BADGE GRID ── */
 .badge-grid {
   display: grid;
@@ -380,6 +418,28 @@ button.avatar-wrap {
   color: #bbb;
   text-align: center;
 }
+
+.badge-icon-img {
+  width: 80px;
+  height: 80px;
+  display: block;
+}
+
+.badge-coming-soon {
+  display: block;
+  width: 100%;
+  font-size: 0.75rem;
+  color: #bbb;
+  text-align: center;
+  padding: 0.5rem 0 0.25rem;
+  letter-spacing: 0.04em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: color 0.15s;
+}
+.badge-coming-soon:hover { color: #888; }
 
 .badge-selected-check {
   position: absolute;

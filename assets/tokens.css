@@ -6,11 +6,11 @@ html { scroll-behavior: smooth; }
 
 :root {
   /* ── PALETTE ── */
-  --red:        #C8102E;
+  --red:        #F8444A;
   --red-dark:   #8A0F1F;
   --black:      #0C0C0C;
-  --gold:       #FFB400;
-  --gold-hover: #ffc433;
+  --gold:       #F2D054;
+  --gold-hover: #f5da70;
   --blue:       #17469D;
   --white:      #FFFFFF;
   --off-white:  #F7F5F2;
@@ -18,7 +18,7 @@ html { scroll-behavior: smooth; }
   --green:      #3aaa6e;
 
   /* ── BRAND ── */
-  --brand-dark:   var(--red-dark);  /* nav, dark surfaces */
+  --brand-dark:   #F71538;          /* nav, dark surfaces */
   --brand-bg:     var(--red);       /* page background */
   --brand-light:  var(--white);     /* text on dark */
   --brand-accent: var(--gold);      /* CTAs, primary actions */

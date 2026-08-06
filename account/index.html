@@ -36,26 +36,23 @@
 
 <div class="page" id="page" style="display:none">
 
-  <!-- Avatar -->
-  <div class="avatar-section">
-    <button class="avatar-wrap" onclick="openBadgeModal()" aria-label="Choose your badge">
-      <div class="avatar-circle" id="avatar-circle">?</div>
-      <div class="avatar-edit">✏</div>
-    </button>
-    <h1 class="page-title">Your Account</h1>
-    <p class="page-subtitle" id="user-email"></p>
-  </div>
+  <h1 class="page-title" style="text-align:center;padding:2rem 0 0.25rem">Your Account</h1>
+  <p class="page-subtitle" id="user-email" style="text-align:center;margin-bottom:1.75rem"></p>
 
-  <!-- Display name -->
+  <!-- Team Information -->
   <div class="card">
-    <p class="card-title">Display Name</p>
-    <p class="card-subtitle">This is how you appear on the ladder.</p>
-    <div class="field-row">
-      <label for="name-input" class="sr-only">Display name</label>
-      <input class="field-input" type="text" id="name-input" maxlength="32" placeholder="Enter your name">
-      <button class="btn btn-primary" id="save-name-btn" onclick="saveName()">Save</button>
+    <p class="card-title">Team Information</p>
+    <div class="team-info-row">
+      <button class="team-icon-btn" onclick="openBadgeModal()" aria-label="Change badge">
+        <div id="team-icon-display"></div>
+      </button>
+      <div style="flex:1">
+        <label for="name-input" class="sr-only">Display name</label>
+        <input class="field-input" type="text" id="name-input" maxlength="32" placeholder="Display name" style="width:100%">
+      </div>
     </div>
     <p class="save-feedback" id="name-feedback"></p>
+    <button class="btn btn-primary" id="save-name-btn" onclick="saveProfile()" style="width:100%;margin-top:0.75rem">Save</button>
   </div>
 
   <!-- Prediction status -->
@@ -117,15 +114,11 @@
 <div class="modal-overlay" id="badge-modal" onclick="handleBadgeOverlayClick(event)" role="dialog" aria-modal="true" aria-labelledby="badge-modal-title">
   <div class="modal-card">
     <div class="modal-header">
-      <div class="modal-title" id="badge-modal-title">Your Badges</div>
+      <div class="modal-title" id="badge-modal-title">Choose Badge</div>
       <button class="modal-close" onclick="closeBadgeModal()">✕</button>
     </div>
-    <p class="modal-desc">Badges are earned through the season. Tap an earned badge to equip it as your profile icon.</p>
     <div class="badge-grid" id="badge-grid"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeBadgeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveBadge()">Save</button>
-    </div>
+    <p class="badge-coming-soon">More badges coming soon</p>
   </div>
 </div>
 
@@ -179,6 +172,15 @@
 
   let currentUser = null;
 
+  // ── ICON BADGES (selectable, shown on ladder) ──
+  const ICON_BADGES = [
+    { id: 'icon-onefifty',  name: 'Anniversary',  path: '../assets/badges/icons/onefifty.svg'  },
+    { id: 'icon-redlion',   name: 'Red Lion',      path: '../assets/badges/icons/redlion.svg'   },
+    { id: 'icon-whitelion', name: 'White Lion',    path: '../assets/badges/icons/whitelion.svg' },
+    { id: 'icon-andsea',    name: 'Third',         path: '../assets/badges/icons/andsea.svg'    },
+    { id: 'icon-overland',  name: 'Away',          path: '../assets/badges/icons/overland.svg'  },
+  ];
+
   // ── BADGE DEFINITIONS ──
   const BADGES = [
     { id: 'founder',    name: 'Founder',          emoji: '⚽', color: '#7c3aed', desc: 'Signed up for Season 26/27',              rarity: 'Common',   earned: true  },
@@ -198,34 +200,36 @@
 
   let selectedBadge = localStorage.getItem('boroBadge') || null;
 
-  // ── AVATAR ──
-  function getInitials(name) {
-    const words = (name || '').trim().split(/\s+/).filter(Boolean);
-    if (!words.length) return '?';
-    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-    return (words[0][0] + words[words.length - 1][0]).toUpperCase();
-  }
-
-  function updateAvatar() {
-    const circle = document.getElementById('avatar-circle');
-    const def = selectedBadge ? BADGES.find(b => b.id === selectedBadge && b.earned) : null;
-    if (def) {
-      circle.textContent = def.emoji;
-      circle.style.background = def.color;
-      circle.style.border = '3px solid rgba(255,255,255,0.4)';
-      circle.style.fontSize = '2rem';
+  // ── TEAM ICON ──
+  function renderTeamIcon() {
+    const el = document.getElementById('team-icon-display');
+    const icon = ICON_BADGES.find(b => b.id === selectedBadge);
+    if (icon) {
+      el.innerHTML = `<img src="${icon.path}" alt="${icon.name}" class="team-icon-img">`;
     } else {
-      const name = document.getElementById('name-input').value;
-      circle.textContent = getInitials(name);
-      circle.style.background = 'rgba(255,255,255,0.18)';
-      circle.style.border = '3px solid rgba(255,255,255,0.3)';
-      circle.style.fontSize = '1.6rem';
+      el.innerHTML = `<span class="team-icon-placeholder">?</span>`;
     }
   }
 
   // ── BADGE MODAL ──
   function openBadgeModal() {
-    renderBadgeGrid();
+    const grid = document.getElementById('badge-grid');
+    grid.innerHTML = '';
+    ICON_BADGES.forEach(badge => {
+      const isSelected = selectedBadge === badge.id;
+      const div = document.createElement('div');
+      div.className = 'badge-item earned' + (isSelected ? ' selected' : '');
+      div.innerHTML = `
+        <img src="${badge.path}" alt="${badge.name}" class="badge-icon-img">
+        <div class="badge-name">${badge.name}</div>
+      `;
+      div.addEventListener('click', () => {
+        selectedBadge = badge.id;
+        renderTeamIcon();
+        closeBadgeModal();
+      });
+      grid.appendChild(div);
+    });
     document.getElementById('badge-modal').classList.add('open');
     document.querySelector('#badge-modal .modal-close').focus();
   }
@@ -236,50 +240,6 @@
 
   function handleBadgeOverlayClick(e) {
     if (e.target === document.getElementById('badge-modal')) closeBadgeModal();
-  }
-
-  function renderBadgeGrid() {
-    const grid = document.getElementById('badge-grid');
-    grid.innerHTML = '';
-
-    BADGES.forEach(badge => {
-      const isSelected = selectedBadge === badge.id;
-      const div = document.createElement('div');
-      div.className = 'badge-item' + (badge.earned ? ' earned' : ' locked') + (isSelected ? ' selected' : '');
-      div.title = badge.earned ? badge.desc : 'Not yet earned';
-
-      const checkHtml = isSelected
-        ? '<div class="badge-selected-check">✓</div>'
-        : '';
-
-      div.innerHTML = `
-        <div class="badge-circle" style="background:${badge.color}">
-          <span>${badge.earned ? badge.emoji : '🔒'}</span>
-          ${checkHtml}
-        </div>
-        <div class="badge-name">${badge.name}</div>
-        <div class="badge-rarity">${badge.rarity}</div>
-      `;
-
-      if (badge.earned) {
-        div.addEventListener('click', () => {
-          selectedBadge = isSelected ? null : badge.id;
-          renderBadgeGrid();
-        });
-      }
-
-      grid.appendChild(div);
-    });
-  }
-
-  function saveBadge() {
-    if (selectedBadge) {
-      localStorage.setItem('boroBadge', selectedBadge);
-    } else {
-      localStorage.removeItem('boroBadge');
-    }
-    updateAvatar();
-    closeBadgeModal();
   }
 
   // ── DELETE MODAL ──
@@ -327,7 +287,7 @@
     document.getElementById('loading').style.display = 'none';
     document.getElementById('page').style.display    = 'block';
 
-    updateAvatar();
+    renderTeamIcon();
   }
 
   // ── LOAD PROFILE ──
@@ -335,6 +295,9 @@
     const email = currentUser?.email ?? '';
     document.getElementById('user-email').textContent    = email;
     document.getElementById('signout-email').textContent = email;
+
+    const savedName = localStorage.getItem('boroName');
+    if (savedName) document.getElementById('name-input').value = savedName;
 
     if (!currentUser) return;
 
@@ -346,7 +309,7 @@
 
     if (error || !data) return;
 
-    document.getElementById('name-input').value = data.name || '';
+    if (data.name) document.getElementById('name-input').value = data.name;
   }
 
   // ── LOAD STATUS ──
@@ -378,8 +341,8 @@
     document.getElementById('progress-wrap').setAttribute('aria-valuenow', made);
   }
 
-  // ── SAVE NAME ──
-  async function saveName() {
+  // ── SAVE PROFILE ──
+  async function saveProfile() {
     const name     = document.getElementById('name-input').value.trim();
     const feedback = document.getElementById('name-feedback');
     const btn      = document.getElementById('save-name-btn');
@@ -393,22 +356,31 @@
     btn.disabled = true;
     feedback.textContent = '';
 
-    const { error } = await sb
-      .from('players')
-      .update({ name })
-      .eq('id', currentUser.id);
+    localStorage.setItem('boroName', name);
+    if (selectedBadge) {
+      localStorage.setItem('boroBadge', selectedBadge);
+    } else {
+      localStorage.removeItem('boroBadge');
+    }
+
+    if (currentUser) {
+      const { error } = await sb
+        .from('players')
+        .update({ name })
+        .eq('id', currentUser.id);
+
+      if (error) {
+        btn.disabled = false;
+        feedback.textContent = "Couldn't save — try again.";
+        feedback.className   = 'save-feedback error';
+        return;
+      }
+    }
 
     btn.disabled = false;
-
-    if (error) {
-      feedback.textContent = "Couldn't save — try again.";
-      feedback.className   = 'save-feedback error';
-    } else {
-      feedback.textContent = 'Name updated ✓';
-      feedback.className   = 'save-feedback';
-      updateAvatar();
-      setTimeout(() => { feedback.textContent = ''; }, 3000);
-    }
+    feedback.textContent = 'Saved ✓';
+    feedback.className   = 'save-feedback';
+    setTimeout(() => { feedback.textContent = ''; }, 3000);
   }
 
   // ── UNSUBSCRIBE ──
@@ -453,7 +425,7 @@
   }
 
   document.getElementById('name-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') saveName();
+    if (e.key === 'Enter') saveProfile();
   });
 
   init();

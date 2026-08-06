@@ -51,20 +51,20 @@
       </h1>
 
       <p class="hero-sub">
-        Join 23 fans competing to call every Boro result of the 2026/27 Championship season. Lock your pre-season predictions, follow the table all season and track the stats to win cash prizes in May.
+        Log in to call every Boro result of the 2026/27 Championship season. Lock your predictions, follow the table all season and track the stats to win cash prizes in May.
       </p>
 
       <div class="form-wrap">
-        <form class="form-row" id="signup-form" onsubmit="handleSubmit(event)">
+        <form class="form-row" id="login-form" onsubmit="handleLogin(event)">
           <label for="email-input" class="sr-only">Email address</label>
           <input type="email" id="email-input" placeholder="your@email.com" required autocomplete="email" aria-describedby="error-msg">
-          <button type="submit" id="submit-btn">Register</button>
+          <button type="submit" id="submit-btn">Log In</button>
         </form>
-        <p class="form-note">No spam. We'll email you when places open up.</p>
+        <p class="form-note">We'll email a one-time login link to your registered address.</p>
         <p class="error-msg" id="error-msg" role="status" aria-live="polite"></p>
         <div class="success-msg" id="success-msg" role="status" aria-live="polite">
-          <strong>You're on the list &#x1F3AF;</strong>
-          We'll be in touch when places open up.
+          <strong>Check your inbox &#x1F4E9;</strong>
+          Click the link we just sent to log in.
         </div>
       </div>
 
@@ -135,18 +135,18 @@
   <!-- BOTTOM CTA -->
   <section class="bottom-cta">
     <h2 class="cta-title">Ready to<br><span>prove it?</span></h2>
-    <p class="cta-sub">24 spots. One season. All 46 fixtures.</p>
+    <p class="cta-sub">One season. All 46 fixtures. Time to log in.</p>
     <div class="form-wrap">
-      <form class="form-row" id="signup-form-2" onsubmit="handleSubmitBottom(event)">
+      <form class="form-row" id="login-form-2" onsubmit="handleLoginBottom(event)">
         <label for="email-input-2" class="sr-only">Email address</label>
         <input type="email" id="email-input-2" placeholder="your@email.com" required autocomplete="email" aria-describedby="error-msg-2">
-        <button type="submit" id="submit-btn-2">Register</button>
+        <button type="submit" id="submit-btn-2">Log In</button>
       </form>
-      <p class="form-note" style="color:rgba(255,255,255,0.28)">No spam. We'll email you when places open up.</p>
+      <p class="form-note" style="color:rgba(255,255,255,0.28)">We'll email a one-time login link to your registered address.</p>
       <p class="error-msg" id="error-msg-2" style="margin-top:0.5rem" role="status" aria-live="polite"></p>
       <div class="success-msg" id="success-msg-2" style="margin-top:0.75rem" role="status" aria-live="polite">
-        <strong>You're on the list &#x1F3AF;</strong>
-        We'll be in touch when places open up.
+        <strong>Check your inbox &#x1F4E9;</strong>
+        Click the link we just sent to log in.
       </div>
     </div>
   </section>
@@ -166,28 +166,33 @@
 
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function submitEmail(email) {
-      const { error } = await sb.from('waitlist').insert([{ email }]);
-      if (error && error.code !== '23505') throw error;
+    const REDIRECT_TO = 'https://www.boropredictor.com/predict/';
+
+    async function sendLoginLink(email) {
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: REDIRECT_TO, shouldCreateUser: false }
+      });
+      if (error) throw error;
     }
 
-    async function handleSubmit(e) {
+    async function handleLogin(e) {
       e.preventDefault();
-      await doSubmit(
+      await doLogin(
         document.getElementById('email-input'),
         document.getElementById('submit-btn'),
-        document.getElementById('signup-form'),
+        document.getElementById('login-form'),
         document.getElementById('success-msg'),
         document.getElementById('error-msg')
       );
     }
 
-    async function handleSubmitBottom(e) {
+    async function handleLoginBottom(e) {
       e.preventDefault();
-      await doSubmit(
+      await doLogin(
         document.getElementById('email-input-2'),
         document.getElementById('submit-btn-2'),
-        document.getElementById('signup-form-2'),
+        document.getElementById('login-form-2'),
         document.getElementById('success-msg-2'),
         document.getElementById('error-msg-2')
       );
@@ -208,7 +213,7 @@
       }, { passive: true });
     })();
 
-    async function doSubmit(emailEl, btn, form, successEl, errEl) {
+    async function doLogin(emailEl, btn, form, successEl, errEl) {
       const email = emailEl.value.trim().toLowerCase();
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
@@ -222,16 +227,16 @@
       btn.textContent = 'Sending…';
       if (errEl) errEl.style.display = 'none';
       try {
-        await submitEmail(email);
+        await sendLoginLink(email);
         form.style.display = 'none';
         const note = form.parentElement.querySelector('.form-note');
         if (note) note.style.display = 'none';
         successEl.style.display = 'block';
       } catch (err) {
         btn.disabled = false;
-        btn.textContent = 'Register';
+        btn.textContent = 'Log In';
         if (errEl) {
-          errEl.textContent = 'Something went wrong — please try again.';
+          errEl.textContent = "We couldn't send a link — check you're using the email you registered with.";
           errEl.style.display = 'block';
         }
       }

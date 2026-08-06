@@ -118,7 +118,10 @@ body.predictions-saved .predictor.draw .result-tab { background: var(--gold); }
 }
 .card-header strong { font-weight: 700; }
 .card-header-left { display: flex; flex-direction: column; gap: 0.15rem; }
+.card-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.15rem; }
 .card-date { opacity: 0.72; }
+.card-stadium { opacity: 0.55; font-size: 0.7rem; }
+.card-kickoff { opacity: 0.72; }
 
 .card-body {
   display: flex;
