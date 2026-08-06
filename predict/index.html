@@ -18,7 +18,7 @@
 <a href="#main-content" class="skip-link">Skip to content</a>
 
 <nav class="navbar">
-  <a href="../landing/"><img src="../assets/BoroPredictor.svg" alt="Boro Predictor logo" class="logo"></a>
+  <a href="../dashboard/"><img src="../assets/BoroPredictor.svg" alt="Boro Predictor logo" class="logo"></a>
   <div class="nav-links">
     <a class="nav-link" href="../dashboard/">Home</a>
     <a class="nav-link active" href="../predict/">Predict</a>
@@ -142,6 +142,23 @@
       }
     });
   })();
+
+  window.addEventListener('beforeunload', e => {
+    if (hasUnsavedChanges) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  document.querySelectorAll('.nav-link, .logo').forEach(link => {
+    link.addEventListener('click', e => {
+      if (hasUnsavedChanges) {
+        if (!confirm('You have unsaved predictions. Leave without saving?')) {
+          e.preventDefault();
+        }
+      }
+    });
+  });
 
   const SUPABASE_URL      = 'https://tkaayrdevanrozsbxmlv.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrYWF5cmRldmFucm96c2J4bWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMTU2ODksImV4cCI6MjA5NDU5MTY4OX0.bnnFYJgolI5vasGlA74eVTyAQiCUgQsnz5_BbVGBmi0';
@@ -389,11 +406,14 @@
 
   // ---------- Score logic ----------
 
+  let hasUnsavedChanges = false;
+
   function changeScore(index, team, delta) {
     scores[index][team] = Math.min(9, Math.max(0, scores[index][team] + delta));
     document.getElementById(`${team}-score-${index}`).textContent = scores[index][team];
     updateFixtureColor(index);
     saveScoresToLocal();
+    hasUnsavedChanges = true;
   }
 
   function updateFixtureColor(index) {
@@ -477,6 +497,7 @@
     }
 
     document.body.classList.add('predictions-saved');
+    hasUnsavedChanges = false;
     btn.textContent = 'Saved!';
     setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1200);
   }
