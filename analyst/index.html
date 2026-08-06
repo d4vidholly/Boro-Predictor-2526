@@ -155,6 +155,7 @@
 <footer>
   <a href="https://d4vidholly.github.io/moveclear/" target="_blank" rel="noopener"><img class="dhd-logo" src="../assets/MoveClear.png" alt="Move Clear"></a>
   <p class="copy">David Holly Design — 2026</p>
+  <p class="copy">Boro Predictor is not affiliated with Middlesbrough FC. For recreational use only.</p>
 </footer>
 
 <!-- ── ANALYST GATE MODAL ── -->
@@ -163,7 +164,6 @@
     <span class="gate-icon">📊</span>
     <div class="gate-title" id="gate-title">Coming Soon</div>
     <p class="gate-desc">Your personal stats hub for the 26/27 season. Fan Profile and Your Season are live — community panels and bookies odds connect as the season progresses.</p>
-    <button class="gate-btn" id="gate-continue">Enter</button>
   </div>
 </div>
 
@@ -179,18 +179,9 @@
         navbar.classList.remove('open');
     });
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') {
-        navbar.classList.remove('open');
-        document.getElementById('gate-overlay').style.display = 'none';
-      }
+      if (e.key === 'Escape') navbar.classList.remove('open');
     });
   })();
-
-  document.getElementById('gate-continue').addEventListener('click', function () {
-    document.getElementById('gate-overlay').style.display = 'none';
-  });
-
-  document.getElementById('gate-continue').focus();
 
   // ── SUPABASE ──
   const SUPABASE_URL      = 'https://tkaayrdevanrozsbxmlv.supabase.co';

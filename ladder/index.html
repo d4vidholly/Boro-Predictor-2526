@@ -76,7 +76,8 @@
 
   <footer>
     <a href="https://d4vidholly.github.io/moveclear/" target="_blank" rel="noopener"><img class="dhd-logo" src="../assets/MoveClear.png" alt="Move Clear"></a>
-    <p>Boro Predictor 26/27 &mdash; Not affiliated with Middlesbrough FC</p>
+    <p>Boro Predictor 26/27</p>
+    <p>Boro Predictor is not affiliated with Middlesbrough FC. For recreational use only.</p>
   </footer>
 
   <!-- Supabase JS -->
@@ -155,7 +156,7 @@
         tr.innerHTML = `
           <td class="rank ${rankClass}">${rank}${arrowHtml}</td>
           <td class="badge-col">${row?.display_badge ? renderAchBadge(row.display_badge) : '<div class="ach-badge-empty"></div>'}</td>
-          <td><div class="player-name">${row ? escHtml(row.name || '—') : '—'}</div></td>
+          <td><div class="player-name-wrap">${row?.team_name ? renderIconBadge(row.team_name) : ''}<span class="player-name">${row ? escHtml(row.name || '—') : '—'}</span></div></td>
           <td class="right num hide-mobile">${row?.played ?? '—'}</td>
           <td class="right num hide-mobile">${row?.goals_for ?? '—'}</td>
           <td class="right num hide-mobile">${row?.goals_away ?? '—'}</td>
@@ -184,6 +185,21 @@
         }
       }
       return html + '</div>';
+    }
+
+    // ── ICON BADGES (chosen in account) ─────────────────────
+    const ICON_BADGES = [
+      { id: 'icon-onefifty',  path: '../assets/badges/icons/onefifty.svg'  },
+      { id: 'icon-redlion',   path: '../assets/badges/icons/redlion.svg'   },
+      { id: 'icon-whitelion', path: '../assets/badges/icons/whitelion.svg' },
+      { id: 'icon-andsea',    path: '../assets/badges/icons/andsea.svg'    },
+      { id: 'icon-overland',  path: '../assets/badges/icons/overland.svg'  },
+    ];
+
+    function renderIconBadge(badgeId) {
+      const def = ICON_BADGES.find(b => b.id === badgeId);
+      if (!def) return '';
+      return `<img src="${def.path}" class="ladder-icon-badge" alt="">`;
     }
 
     // ── ACHIEVEMENT BADGES ───────────────────────────────────

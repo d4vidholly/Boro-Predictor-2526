@@ -66,9 +66,6 @@
       <span class="status-label">Fixtures predicted</span>
       <span class="pill pill-gray" id="pill-count">—</span>
     </div>
-    <div class="progress-wrap" id="progress-wrap" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="46" aria-label="Fixtures predicted">
-      <div class="progress-fill" id="progress-fill"></div>
-    </div>
   </div>
 
   <!-- Marketing -->
@@ -90,6 +87,12 @@
     </div>
   </div>
 
+  <!-- Contact -->
+  <div class="card">
+    <p class="card-title">Get in touch</p>
+    <p class="signout-desc">Questions, issues or feedback — email us at <a href="mailto:hello@boropredictor.com" style="color:var(--red);font-weight:600;">hello@boropredictor.com</a></p>
+  </div>
+
   <!-- Danger Zone -->
   <div class="danger-zone-card">
     <p class="card-title">Danger Zone</p>
@@ -108,6 +111,7 @@
 <footer>
   <a href="https://d4vidholly.github.io/moveclear/" target="_blank" rel="noopener"><img class="dhd-logo" src="../assets/MoveClear.png" alt="Move Clear"></a>
   <p class="copy">David Holly Design — 2026</p>
+  <p class="copy">Boro Predictor is not affiliated with Middlesbrough FC. For recreational use only.</p>
 </footer>
 
 <!-- ── BADGE MODAL ── -->
@@ -333,12 +337,9 @@
       .eq('player_id', currentUser.id);
 
     const pillCount = document.getElementById('pill-count');
-    const total = 46;
-    const made  = count ?? 0;
-    pillCount.textContent = `${made} / ${total}`;
-    pillCount.className   = 'pill ' + (made === total ? 'pill-green' : made > 0 ? 'pill-gold' : 'pill-gray');
-    document.getElementById('progress-fill').style.width = `${(made / total) * 100}%`;
-    document.getElementById('progress-wrap').setAttribute('aria-valuenow', made);
+    const made = count ?? 0;
+    pillCount.textContent = made > 0 ? 'Yes' : 'No';
+    pillCount.className   = 'pill ' + (made > 0 ? 'pill-green' : 'pill-gray');
   }
 
   // ── SAVE PROFILE ──
@@ -366,7 +367,7 @@
     if (currentUser) {
       const { error } = await sb
         .from('players')
-        .update({ name })
+        .update({ name, team_name: selectedBadge ?? null })
         .eq('id', currentUser.id);
 
       if (error) {

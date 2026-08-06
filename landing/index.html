@@ -51,20 +51,20 @@
       </h1>
 
       <p class="hero-sub">
-        Log in to call every Boro result of the 2026/27 Championship season. Lock your predictions, follow the table all season and track the stats to win cash prizes in May.
+        Call every Boro result of the 2026/27 Championship season. Lock your predictions before August 14, follow the live table all season, and win cash prizes in May.
       </p>
 
       <div class="form-wrap">
         <form class="form-row" id="login-form" onsubmit="handleLogin(event)">
           <label for="email-input" class="sr-only">Email address</label>
           <input type="email" id="email-input" placeholder="your@email.com" required autocomplete="email" aria-describedby="error-msg">
-          <button type="submit" id="submit-btn">Log In</button>
+          <button type="submit" id="submit-btn">Get my link</button>
         </form>
-        <p class="form-note">We'll email a one-time login link to your registered address.</p>
+        <p class="form-note">Invite only &mdash; enter the email address you were invited with.</p>
         <p class="error-msg" id="error-msg" role="status" aria-live="polite"></p>
         <div class="success-msg" id="success-msg" role="status" aria-live="polite">
           <strong>Check your inbox &#x1F4E9;</strong>
-          Click the link we just sent to log in.
+          We&rsquo;ve sent a login link &mdash; click it to get started.
         </div>
       </div>
 
@@ -135,18 +135,18 @@
   <!-- BOTTOM CTA -->
   <section class="bottom-cta">
     <h2 class="cta-title">Ready to<br><span>prove it?</span></h2>
-    <p class="cta-sub">One season. All 46 fixtures. Time to log in.</p>
+    <p class="cta-sub">One season. All 46 fixtures. Your call.</p>
     <div class="form-wrap">
       <form class="form-row" id="login-form-2" onsubmit="handleLoginBottom(event)">
         <label for="email-input-2" class="sr-only">Email address</label>
         <input type="email" id="email-input-2" placeholder="your@email.com" required autocomplete="email" aria-describedby="error-msg-2">
-        <button type="submit" id="submit-btn-2">Log In</button>
+        <button type="submit" id="submit-btn-2">Get my link</button>
       </form>
-      <p class="form-note" style="color:rgba(255,255,255,0.28)">We'll email a one-time login link to your registered address.</p>
+      <p class="form-note" style="color:rgba(255,255,255,0.28)">Invite only &mdash; enter the email address you were invited with.</p>
       <p class="error-msg" id="error-msg-2" style="margin-top:0.5rem" role="status" aria-live="polite"></p>
       <div class="success-msg" id="success-msg-2" style="margin-top:0.75rem" role="status" aria-live="polite">
         <strong>Check your inbox &#x1F4E9;</strong>
-        Click the link we just sent to log in.
+        We&rsquo;ve sent a login link &mdash; click it to get started.
       </div>
     </div>
   </section>
@@ -157,6 +157,7 @@
   <footer>
     <a href="https://d4vidholly.github.io/moveclear/" target="_blank" rel="noopener"><img class="dhd-logo" src="../assets/MoveClear.png" alt="Move Clear"></a>
     <p>Boro Predictor 26/27</p>
+    <p>Boro Predictor is not affiliated with Middlesbrough FC. For recreational use only.</p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -171,7 +172,7 @@
     async function sendLoginLink(email) {
       const { error } = await sb.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: REDIRECT_TO, shouldCreateUser: true }
+        options: { emailRedirectTo: REDIRECT_TO, shouldCreateUser: false }
       });
       if (error) throw error;
     }
@@ -236,7 +237,7 @@
         btn.disabled = false;
         btn.textContent = 'Log In';
         if (errEl) {
-          errEl.textContent = "We couldn't send a link — check you're using the email you registered with.";
+          errEl.textContent = "That email isn’t on the list — get in touch if you think that’s a mistake.";
           errEl.style.display = 'block';
         }
       }
