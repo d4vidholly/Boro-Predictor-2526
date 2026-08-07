@@ -109,15 +109,15 @@
       <p class="panel-desc">Probability of your predicted scoreline based on betting market odds.</p>
 
       <div class="prob-match">
-        <div class="prob-match-label">Your call · Boro vs Swansea</div>
-        <div class="prob-scoreline" id="prob-scoreline">2 – 0</div>
+        <div class="prob-match-label" id="prob-match-label">Your call</div>
+        <div class="prob-scoreline" id="prob-scoreline">—</div>
       </div>
 
       <div class="prob-pct-row">
-        <span class="prob-pct-value">—</span>
-        <span class="prob-chip prob-soon">Odds API coming soon</span>
+        <span class="prob-pct-value" id="prob-pct-value">—</span>
+        <span class="prob-chip prob-soon" id="prob-chip">Odds coming soon</span>
       </div>
-      <div class="prob-track"><div class="prob-fill" style="width:0%"></div></div>
+      <div class="prob-track"><div class="prob-fill" id="prob-fill" style="width:0%"></div></div>
       <p class="prob-note">Odds converted to implied probability · Colour coded: &lt;5% long shot · 5–10% possible · 10–15% decent · 15%+ strong</p>
     </div>
 
@@ -377,15 +377,72 @@
       `${total} prediction${total === 1 ? '' : 's'} so far`;
   }
 
-  // ── BOOKIES: show player's saved prediction for fixture 0 ──
-  (function showPrediction() {
+  // ── BOOKIES ──
+  // Reads from the `odds` table, populated server-side by the sync-odds
+  // Edge Function (see supabase/functions/sync-odds). No odds API call
+  // ever happens from the browser.
+  async function buildBookies(nextFixture) {
+    const labelEl = document.getElementById('prob-match-label');
+    const scoreEl = document.getElementById('prob-scoreline');
+    const pctEl   = document.getElementById('prob-pct-value');
+    const chipEl  = document.getElementById('prob-chip');
+    const fillEl  = document.getElementById('prob-fill');
+
+    function setState(chipClass, chipText, pctText, fillPct) {
+      chipEl.className = `prob-chip ${chipClass}`;
+      chipEl.textContent = chipText;
+      pctEl.textContent = pctText;
+      fillEl.style.width = `${fillPct}%`;
+    }
+
+    if (!nextFixture) {
+      labelEl.textContent = 'Season complete';
+      scoreEl.textContent = '—';
+      setState('prob-soon', 'No upcoming fixture', '—', 0);
+      return;
+    }
+
+    labelEl.textContent = `Your call · ${nextFixture.home_team} vs ${nextFixture.away_team}`;
+
     const saved = localStorage.getItem('boroScores');
-    if (!saved) return;
-    const scores = JSON.parse(saved);
-    const s = scores[0];
-    if (!s) return;
-    document.getElementById('prob-scoreline').textContent = `${s.home} – ${s.away}`;
-  })();
+    const scores = saved ? JSON.parse(saved) : null;
+    const s = scores?.[nextFixture.fixture_index];
+
+    if (!s) {
+      scoreEl.textContent = '—';
+      setState('prob-soon', 'Predict this fixture first', '—', 0);
+      return;
+    }
+
+    scoreEl.textContent = `${s.home} – ${s.away}`;
+
+    const { data: fixtureOdds } = await sb
+      .from('odds')
+      .select('home_goals, away_goals, decimal_odds')
+      .eq('fixture_index', nextFixture.fixture_index);
+
+    if (!fixtureOdds || fixtureOdds.length === 0) {
+      setState('prob-soon', 'Odds coming soon', '—', 0);
+      return;
+    }
+
+    const match = fixtureOdds.find(o => o.home_goals === s.home && o.away_goals === s.away);
+    if (!match) {
+      setState('prob-soon', 'Not covered by odds market', '—', 0);
+      return;
+    }
+
+    const pct = 100 / match.decimal_odds;
+    const fillPct = Math.min(100, pct);
+
+    let tierClass, tierText;
+    if (pct < 5)       { tierClass = 'prob-long';   tierText = 'Long Shot'; }
+    else if (pct < 10)  { tierClass = 'prob-poss';   tierText = 'Possible'; }
+    else if (pct < 15)  { tierClass = 'prob-decent'; tierText = 'Decent'; }
+    else                { tierClass = 'prob-strong'; tierText = 'Strong'; }
+
+    setState(tierClass, tierText, `${Math.round(pct * 10) / 10}%`, fillPct);
+  }
 
   // ── YOUR SEASON ──
   function buildSeasonSummary() {
@@ -448,6 +505,7 @@
       : [];
     buildMostCommonScore(nextFixture, preds);
     buildCommunitySplit(nextFixture, preds);
+    buildBookies(nextFixture);
   })();
 </script>
 
