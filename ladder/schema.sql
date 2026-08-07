@@ -173,9 +173,12 @@ ALTER TABLE public.settings    ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "waitlist_insert" ON public.waitlist
   FOR INSERT WITH CHECK (TRUE);
 
--- Players: each player can read/update their own row
-CREATE POLICY "players_select_own" ON public.players
-  FOR SELECT USING (auth.uid() = id);
+-- Players: any authenticated user can read all players (required for the
+-- ladder view's join across players — same trust model as predictions_select_all
+-- below, since predictions are already fully readable across players).
+-- Only the owning player can update their own row.
+CREATE POLICY "players_select_all" ON public.players
+  FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "players_update_own" ON public.players
   FOR UPDATE USING (auth.uid() = id);
 
