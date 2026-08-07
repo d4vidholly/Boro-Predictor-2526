@@ -533,6 +533,10 @@
     if (!clearBtn) return;
 
     clearBtn.addEventListener('click', async () => {
+      if (Date.now() >= PREDICTIONS_DEADLINE) {
+        alert('Predictions are locked — the deadline has passed.');
+        return;
+      }
       if (!confirm('Are you sure you want to clear all predictions?')) return;
 
       localStorage.removeItem('boroScores');
@@ -560,6 +564,11 @@
     const original = btn.textContent;
 
     if (!currentUser) return;
+
+    if (Date.now() >= PREDICTIONS_DEADLINE) {
+      alert('Predictions are locked — the deadline has passed.');
+      return;
+    }
 
     btn.disabled = true;
     btn.textContent = 'Saving…';

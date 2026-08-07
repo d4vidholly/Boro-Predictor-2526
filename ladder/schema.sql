@@ -195,13 +195,27 @@ CREATE POLICY "results_select" ON public.results
 CREATE POLICY "settings_select" ON public.settings
   FOR SELECT USING (auth.role() = 'authenticated');
 
--- Predictions: users can read all (for ladder), only write their own
+-- Predictions: users can read all (for ladder), only write their own,
+-- and only before the season deadline — enforced here so it can't be
+-- bypassed by the client, regardless of any UI-level lock messaging.
 CREATE POLICY "predictions_select_all" ON public.predictions
   FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "predictions_insert_own" ON public.predictions
-  FOR INSERT WITH CHECK (auth.uid() = player_id);
+  FOR INSERT WITH CHECK (
+    auth.uid() = player_id
+    AND now() < '2026-08-15T00:00:00Z'::timestamptz
+  );
 CREATE POLICY "predictions_update_own" ON public.predictions
-  FOR UPDATE USING (auth.uid() = player_id);
+  FOR UPDATE USING (auth.uid() = player_id)
+  WITH CHECK (
+    auth.uid() = player_id
+    AND now() < '2026-08-15T00:00:00Z'::timestamptz
+  );
+CREATE POLICY "predictions_delete_own" ON public.predictions
+  FOR DELETE USING (
+    auth.uid() = player_id
+    AND now() < '2026-08-15T00:00:00Z'::timestamptz
+  );
 
 
 -- ── TRIGGER: auto-create player row on first login ────────

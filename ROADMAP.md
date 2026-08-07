@@ -24,23 +24,17 @@
 
 ## Phase 2 — Open the App (now → August 14)
 
-- ✅ Login model decided: **invite-only**. `shouldCreateUser: false` on magic-link sign-in — only emails already in the auth DB can log in. Admin sends the first-time link manually once payment is confirmed.
-- ✅ Magic-link flow tested and hardened (see Admin Tool + Recent Changes below)
+- ✅ Login model decided: **invite-only**. `shouldCreateUser: false` on magic-link sign-in — only emails already in the auth DB can log in.
+- ✅ Player onboarding process decided: **manual, no admin tool needed**. Once a player pays, David adds them directly in Supabase (Authentication → Users), then tells them to request their login link themselves from the landing page — `shouldCreateUser: false` lets it through since they now exist in the auth DB. The `admin/index.html` invite-sending tool built earlier this week is not being used; see note below.
+- ✅ Magic-link flow tested and hardened (see Recent Changes below)
 - ✅ Auth redirects re-enabled on all gated pages, including `dashboard/index.html` (7 Aug 2026 — was the actual site-wide auth bypass bug, not just a dashboard TODO; see Recent UI Changes)
 - ✅ `support@boropredictor.com` set up (7 Aug 2026) — Namecheap free email forwarding to David's Gmail, plus Gmail "Send mail as" configured so replies can go out from that address too. Not yet tested end-to-end (queued for later).
-- ⬜ Confirm `predictions_locked = false` in Supabase settings table
+- ✅ Predictions deadline now enforced at the database level (7 Aug 2026) — see Phase 3, moved up since it was implemented today rather than waiting for kickoff
 - ⬜ Confirm Supabase auth redirect URLs include `https://www.boropredictor.com/**`
-- ⬜ Invite paid players via the new admin tool (see below)
 
-## Admin Tool (new, uncommitted)
+## Admin Tool — not in use
 
-`admin/index.html` + `admin/styles.css` — built but not yet committed to git.
-
-- Passphrase-gated page (not linked from nav, `noindex,nofollow`)
-- Lets David send a first-time magic-link sign-in to a player's email once their payment is confirmed
-- Keeps a "sent this session" list for tracking
-- ⬜ Decide on the passphrase / auth approach before this goes live (currently a client-side passphrase check — fine for now but worth hardening before relying on it)
-- ⬜ Commit `admin/` to the repo (currently untracked)
+`admin/index.html` + `admin/styles.css` exist locally (untracked, not committed) but the manual Supabase + self-serve login-link workflow above replaced the need for it. Leaving it as-is, uncommitted, unless the manual process stops scaling — no need to harden its passphrase or commit it for now.
 
 ## Recent UI Changes (7 August 2026)
 
@@ -102,7 +96,8 @@
 
 ## Phase 3 — Lock & Run (August 14 onwards)
 
-- Set `predictions_locked = true` before kickoff
+- ✅ Predictions lock automatically — no manual flag needed. The `predictions` table's INSERT/UPDATE/DELETE RLS policies now check `now() < '2026-08-15T00:00:00Z'` directly (7 Aug 2026), matching the predict page's countdown ticker exactly. Postgres refuses the write itself once the deadline passes, so it can't be forgotten or bypassed client-side. `predict/index.html`'s save and "Clear All" also check the same deadline first, showing a friendly "Predictions are locked" message instead of a raw database error.
+- ✅ Fixed missing `DELETE` policy on `predictions` while in there (7 Aug 2026) — "Clear All" had been silently failing at the database level with no error (RLS blocked it, 0 rows affected) since no DELETE policy existed at all.
 - Enter results weekly via `ladder/SETUP.md` flow
 - Ladder VIEW auto-computes points
 
@@ -124,7 +119,7 @@ Users who sign up on the landing page but never enter the competition sit only i
 
 Six panels on `analyst/index.html`. Only the first two are finished and visible; everything else is blurred or hidden behind a "More features coming soon" overlay so the page can be shown without looking half-built.
 
-- ⬜ **The full-page "Coming Soon" gate modal is currently disabled** (commented out in the HTML, `<!-- ANALYST GATE MODAL (temporarily disabled for review...) -->`) so it could be worked on locally. A lighter gold "In development" banner is shown instead. **Restore the gate modal before real players are pointed at this page** — right now anyone who navigates here directly sees the live panels below, not a blocking wall.
+- The full-page "Coming Soon" gate modal is currently disabled (commented out in the HTML, `<!-- ANALYST GATE MODAL (temporarily disabled for review...) -->`) so it could be worked on locally. A lighter gold "In development" banner is shown instead. **Decided (7 Aug 2026): fine to leave the page open like this for now** — revisit restoring the full gate closer to when the page is finished or being promoted more heavily.
 
 ### Panel 1 — Community Split ✅ Live
 **What:** Donut chart showing how the community split their prediction (home win / draw / away win) for the next unplayed fixture.
