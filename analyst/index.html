@@ -96,61 +96,71 @@
       <p class="mcs-your-pick" id="mcs-your-pick"></p>
     </div>
 
-    <!-- ── 3: Fan Profile ── -->
-    <div class="panel">
-      <div class="panel-title">Fan Profile</div>
-      <p class="panel-desc">Your outlook vs Boro's actual points from completed games.</p>
-      <div id="profile-content">
-        <div class="profile-empty">Save your predictions on the Predict page to unlock your fan profile.</div>
-      </div>
-    </div>
+    <!-- ── Everything below is still being built ── -->
+    <div class="coming-soon-wrap">
+      <div class="coming-soon-blur">
 
-    <!-- ── 4: Bookies Probability ── -->
-    <div class="panel">
-      <div class="panel-title">Bookies</div>
-      <p class="panel-desc">Probability of your predicted scoreline based on betting market odds.</p>
-
-      <div class="prob-match">
-        <div class="prob-match-label" id="prob-match-label">Your call</div>
-        <div class="prob-scoreline" id="prob-scoreline">—</div>
-      </div>
-
-      <div class="prob-pct-row">
-        <span class="prob-pct-value" id="prob-pct-value">—</span>
-        <span class="prob-chip prob-soon" id="prob-chip">Odds coming soon</span>
-      </div>
-      <div class="prob-track"><div class="prob-fill" id="prob-fill" style="width:0%"></div></div>
-      <p class="prob-note">Odds converted to implied probability · Colour coded: &lt;5% long shot · 5–10% possible · 10–15% decent · 15%+ strong</p>
-    </div>
-
-    <!-- Season overview section -->
-    <div class="grid-section-label">Season Overview</div>
-
-    <!-- ── 5: Season Achievement ── -->
-    <div class="panel panel-wide">
-      <div class="panel-title">Season Achievement</div>
-      <p class="panel-desc">Your rarest correct call — the score you got that fewest others predicted.</p>
-
-      <div class="ach-wrap">
-        <div class="ach-left">
-          <div class="ach-icon">🏅</div>
-          <div class="ach-locked-title">First Results Needed</div>
-          <div class="ach-locked-desc">Your rarest correct prediction unlocks once Boro's first results are in.</div>
+        <!-- ── 3: Fan Profile ── -->
+        <div class="panel">
+          <div class="panel-title">Fan Profile</div>
+          <p class="panel-desc">Your outlook vs Boro's actual points from completed games.</p>
+          <div id="profile-content">
+            <div class="profile-empty">Save your predictions on the Predict page to unlock your fan profile.</div>
+          </div>
         </div>
-        <div class="ach-preview">
-          <div class="ach-preview-label">Example</div>
-          <div class="ach-preview-score">Boro 2–0 Swansea</div>
-          <div class="ach-preview-rarity">Only 2 players predicted this · Your rarest call</div>
-        </div>
-      </div>
-    </div>
 
-    <!-- ── 6: Your Season ── -->
-    <div class="panel panel-wide">
-      <div class="panel-title">Your Season</div>
-      <p class="panel-desc">How your 46-game prediction stacks up across the championship.</p>
-      <div id="season-summary-content">
-        <div class="ss-empty">Save your predictions on the Predict page to see your season summary.</div>
+        <!-- ── 4: Bookies Probability ── -->
+        <div class="panel">
+          <div class="panel-title">Bookies</div>
+          <p class="panel-desc">Probability of your predicted scoreline based on betting market odds.</p>
+
+          <div class="prob-match">
+            <div class="prob-match-label" id="prob-match-label">Your call</div>
+            <div class="prob-scoreline" id="prob-scoreline">—</div>
+          </div>
+
+          <div class="prob-pct-row">
+            <span class="prob-pct-value" id="prob-pct-value">—</span>
+            <span class="prob-chip prob-soon" id="prob-chip">Odds coming soon</span>
+          </div>
+          <div class="prob-track"><div class="prob-fill" id="prob-fill" style="width:0%"></div></div>
+          <p class="prob-note">Odds converted to implied probability · Colour coded: &lt;5% long shot · 5–10% possible · 10–15% decent · 15%+ strong</p>
+        </div>
+
+        <!-- Season Overview panels hidden entirely for now (not just blurred) —
+             restore when Season Achievement is ready to build.
+        <div class="grid-section-label">Season Overview</div>
+
+        <div class="panel panel-wide">
+          <div class="panel-title">Season Achievement</div>
+          <p class="panel-desc">Your rarest correct call — the score you got that fewest others predicted.</p>
+
+          <div class="ach-wrap">
+            <div class="ach-left">
+              <div class="ach-icon">🏅</div>
+              <div class="ach-locked-title">First Results Needed</div>
+              <div class="ach-locked-desc">Your rarest correct prediction unlocks once Boro's first results are in.</div>
+            </div>
+            <div class="ach-preview">
+              <div class="ach-preview-label">Example</div>
+              <div class="ach-preview-score">Boro 2–0 Swansea</div>
+              <div class="ach-preview-rarity">Only 2 players predicted this · Your rarest call</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel panel-wide">
+          <div class="panel-title">Your Season</div>
+          <p class="panel-desc">How your 46-game prediction stacks up across the championship.</p>
+          <div id="season-summary-content">
+            <div class="ss-empty">Save your predictions on the Predict page to see your season summary.</div>
+          </div>
+        </div>
+        -->
+
+      </div>
+      <div class="coming-soon-overlay">
+        <span>More features coming soon</span>
       </div>
     </div>
 
@@ -400,8 +410,8 @@
       : DRAW_COLOR_DARK;
 
     el.innerHTML = `
-      <div class="mcs-score" style="color:${favorColor}">${h} – ${a}</div>
-      <div class="mcs-bar-wrap"><div class="mcs-bar-fill" style="width:${pct}%"></div></div>
+      <div class="mcs-score">${h} – ${a}</div>
+      <div class="mcs-bar-wrap"><div class="mcs-bar-fill" style="width:${pct}%;background:${favorColor}"></div></div>
       <div class="mcs-meta">
         <span>${topCount} of ${preds.length} player${preds.length === 1 ? '' : 's'}</span>
         <span>${pct}%</span>
@@ -557,6 +567,7 @@
   // ── YOUR SEASON ──
   function buildSeasonSummary() {
     const el = document.getElementById('season-summary-content');
+    if (!el) return; // panel currently hidden
     const saved = localStorage.getItem('boroScores');
     if (!saved) return;
 
