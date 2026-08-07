@@ -25,19 +25,50 @@
 
 ## Phase 2 — Open the App (now → August 14)
 
-- ⬜ Verify magic-link → player creation → predict → save flow end to end (testing in progress)
+- ✅ Login model decided: **invite-only**. `shouldCreateUser: false` on magic-link sign-in — only emails already in the auth DB can log in. Admin sends the first-time link manually once payment is confirmed.
+- ✅ Magic-link flow tested and hardened (see Admin Tool + Recent Changes below)
 - ⬜ Confirm `predictions_locked = false` in Supabase settings table
 - ⬜ Confirm Supabase auth redirect URLs include `https://www.boropredictor.com/**`
-- ⬜ Invite waitlist users
+- ⬜ Invite paid players via the new admin tool (see below)
+- ⬜ Re-enable auth redirects on `dashboard/index.html` once invite flow is confirmed working end to end (currently commented out — `// TODO: restore auth redirect when sign-in flow is wired up`)
 
-## Recent UI Changes (August 2026)
+## Admin Tool (new, uncommitted)
 
-- Auth redirects removed — all pages accessible without login; Supabase features degrade gracefully
+`admin/index.html` + `admin/styles.css` — built but not yet committed to git.
+
+- Passphrase-gated page (not linked from nav, `noindex,nofollow`)
+- Lets David send a first-time magic-link sign-in to a player's email once their payment is confirmed
+- Keeps a "sent this session" list for tracking
+- ⬜ Decide on the passphrase / auth approach before this goes live (currently a client-side passphrase check — fine for now but worth hardening before relying on it)
+- ⬜ Commit `admin/` to the repo (currently untracked)
+
+## Recent UI Changes (6 August 2026)
+
+**Login / auth**
+- Landing page converted from waitlist email capture to a magic-link login form ("Get my link")
+- Switched to invite-only: `shouldCreateUser` fixed from `false`→`true`→back to `false` over the day; final state is invite-only (admin sends first link)
+- Fixed session race condition: `predict/index.html` now also listens via `onAuthStateChange` as a fallback so the session is reliably captured after the PKCE redirect from a magic link
+- Error handling: button resets to "Get my link" (not "Log In") on failure, with a clearer error message
+- Auth redirects removed from `predict/` and `dashboard/` for now — pages are accessible without login while the invite flow is being finished; `account/` and sign-out still redirect to landing
+
+**Badges & ladder**
+- Account page: Team Information card with a clickable badge icon opening a modal of 5 SVG icon choices; badge now saved to `players.team_name` in Supabase (survives logout/login), not just localStorage
+- Ladder: club badge now shown per row (reads `team_name`), sized to match the fallback grey circle, with a fallback if the badge ID isn't recognised
+
+**Other UX**
+- Predict page: save button stays on "Saved ✓" until the next edit instead of resetting after 1.2s
+- Predict page: unsaved-changes warning if the user navigates away or closes the tab with edited-but-unsaved scores
+- All pages: logo now links to `dashboard/` instead of `landing/`
+- Account page: contact email section added then removed same day (not ready yet)
+- All pages: footer disclaimer added — not affiliated with Middlesbrough FC
+- Analyst gate modal: title changed to "Coming Soon", Enter button and dismiss handlers removed (gate is now permanent, not skippable)
 - Colour tokens updated: `--red` → `#F8444A`, `--gold` → `#F2D054`, navbar `--brand-dark` → `#F71538`
-- Predict page: match cards now show stadium and kick-off time
-- Dashboard: upcoming fixture shows kick-off time and stadium
-- Analyst gate modal title changed to "Coming Soon"
-- Account page: badge picker redesigned — 5 custom SVG icons in Team Information card, clicking the icon opens a modal to choose; display name and badge persist via localStorage
+- Predict/dashboard: match cards show stadium and kick-off time
+- Landing page step images (`landing-a/b/c.png`) refreshed
+
+## Other Untracked Files
+
+- `Boro_Predictor_Accessibility_Audit.docx` sitting in repo root, untracked — a WCAG audit doc, worth deciding whether it belongs in the repo (e.g. move to a `/docs` folder) or just kept locally.
 
 ## Phase 3 — Lock & Run (August 14 onwards)
 
@@ -77,15 +108,13 @@ Four panels on `analyst/index.html`. Gate modal on entry. Fan Profile is live (r
 ### Panel 2 — Bookies Probability
 **What:** Shows the implied probability of the player's own predicted scoreline based on betting market odds. Colour coded by chance: <5% Long Shot · 5–10% Possible · 10–15% Decent · 15%+ Strong.
 
-**Current state:** Shows player's saved prediction for fixture 0 (from localStorage). Probability shows "—" with "API coming soon" label.
-
-**To make live:**
-- Integrate The Odds API (or API-Football odds endpoint)
-- For each upcoming fixture, fetch correct-score market odds
-- Convert decimal odds to implied probability: `1 / decimal_odds * 100`
-- Match against player's predicted scoreline and display
-- Cache results (odds rarely change more than once/day)
-- Threshold colours: <5% → red `.prob-long` · 5–10% → amber `.prob-poss` · 10–15% → blue `.prob-decent` · 15%+ → green `.prob-strong`
+**Current state (7 Aug 2026):** ✅ Built and wired end-to-end.
+- `odds` table + RLS created in Supabase (SELECT-only for authenticated users)
+- `supabase/functions/sync-odds/index.ts` — finds the next fixture, matches it on The Odds API, pulls `correct_score` odds for a single fixed UK bookmaker (bet365, falls back to first available), upserts into `odds`
+- Deployed and manually invoked successfully — key valid, event matching works
+- `analyst/index.html` Bookies panel reads from `odds`, computes implied probability, applies the colour tiers
+- ⬜ **Daily cron not yet scheduled** — creating it in Dashboard → Integrations/Cron failed with `42P01: relation cron.job does not exist` because the `pg_cron` extension isn't enabled. Fix: Database → Extensions → enable `pg_cron`, then recreate the cron job (Type: Supabase Edge Function → `sync-odds`, schedule `0 8 * * *`, Authorization header with the anon key, timeout 5000ms — see cron job fields already filled in once, just needs pg_cron enabled first)
+- ⬜ For now, the `correct_score` market isn't yet covered by The Odds API for the next fixture (Middlesbrough v Lincoln, 15 Aug) even though it's live on Oddschecker — likely an ingestion lag on The Odds API's side, not a bug. Re-check closer to kickoff once the cron is running.
 
 ### Panel 3 — Fan Profile
 **What:** Classifies the player as Pessimist / Realist / Optimist based purely on their own predicted Boro season points total.

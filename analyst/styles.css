@@ -160,12 +160,22 @@
   flex-shrink: 0;
 }
 
-.cs-dot-h { background: var(--chart-home); }
-.cs-dot-d { background: var(--chart-draw); border: 1px solid #bbb; }
-.cs-dot-a { background: var(--red); }
+.cs-key-badge {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.cs-key-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .cs-key-item strong {
   margin-left: auto;
+  flex-shrink: 0;
   font-family: var(--font-display);
   font-weight: 800;
   color: var(--black);

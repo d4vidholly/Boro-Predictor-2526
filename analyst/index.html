@@ -59,7 +59,7 @@
       <div id="cs-content">
         <div class="cs-chart-wrap">
           <div class="cs-donut" id="cs-donut"></div>
-          <div class="cs-key">
+          <div class="cs-key" id="cs-key">
             <div class="cs-key-item">
               <span class="cs-dot cs-dot-h"></span>
               Home win <strong id="cs-pct-h">—</strong>
@@ -194,6 +194,65 @@
   const SUPABASE_URL      = 'https://tkaayrdevanrozsbxmlv.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrYWF5cmRldmFucm96c2J4bWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMTU2ODksImV4cCI6MjA5NDU5MTY4OX0.bnnFYJgolI5vasGlA74eVTyAQiCUgQsnz5_BbVGBmi0';
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ── TEAM BADGES & DATA COLOURS (Community Split) ──
+  // Real club colours where they don't clash — Boro is always red, so any
+  // other traditionally-red side gets a substitute so the two donut
+  // segments stay visually distinct. Draw stays neutral grey regardless.
+  const TEAM_BADGES = {
+    "Middlesbrough":             "../assets/badges/middlesbrough.svg",
+    "Blackburn Rovers":          "../assets/badges/blackburn.svg",
+    "Birmingham City":           "../assets/badges/birmingham.svg",
+    "Bolton Wanderers":          "../assets/badges/bolton.svg",
+    "Bristol City":              "../assets/badges/bristolcity.svg",
+    "Burnley":                   "../assets/badges/burnley.svg",
+    "Cardiff City":              "../assets/badges/cardiff.svg",
+    "Charlton Athletic":         "../assets/badges/charlton.svg",
+    "Derby County":              "../assets/badges/derby.svg",
+    "Lincoln City":              "../assets/badges/lincoln.svg",
+    "Millwall":                  "../assets/badges/millwall.svg",
+    "Norwich City":              "../assets/badges/norwich.svg",
+    "Portsmouth":                "../assets/badges/portsmouth.svg",
+    "Preston North End":         "../assets/badges/preston.svg",
+    "QPR":                       "../assets/badges/qpr.svg",
+    "Sheffield United":          "../assets/badges/sheffieldutd.svg",
+    "Southampton":               "../assets/badges/southampton.svg",
+    "Stoke City":                "../assets/badges/stokecity.svg",
+    "Swansea City":              "../assets/badges/swansea.svg",
+    "Watford":                   "../assets/badges/watford.svg",
+    "West Brom":                 "../assets/badges/westbrom.svg",
+    "West Ham United":           "../assets/badges/westham.svg",
+    "Wolverhampton Wanderers":   "../assets/badges/wolves.svg",
+    "Wrexham":                   "../assets/badges/wrexham.svg",
+  };
+
+  const TEAM_COLORS = {
+    "Middlesbrough":             "#F8444A", // Boro red — always this
+    "Blackburn Rovers":          "#1B58A8",
+    "Birmingham City":           "#0033A0",
+    "Bolton Wanderers":          "#0F1A3C",
+    "Bristol City":              "#E2711D", // real kit is red — changed
+    "Burnley":                   "#6C1D45",
+    "Cardiff City":              "#0070B5",
+    "Charlton Athletic":         "#6A3FA0", // real kit is red — changed
+    "Derby County":              "#2B2E33",
+    "Lincoln City":              "#111111", // black, as requested
+    "Millwall":                  "#1E3A8A",
+    "Norwich City":              "#E8B923",
+    "Portsmouth":                "#00285E",
+    "Preston North End":         "#1B1F3B",
+    "QPR":                       "#1D5BA4",
+    "Sheffield United":          "#52616B", // real kit is red — changed
+    "Southampton":               "#F2B807", // real kit is red — changed
+    "Stoke City":                "#C1440E", // real kit is red — changed
+    "Swansea City":              "#0EA5A5",
+    "Watford":                   "#F5A623",
+    "West Brom":                 "#002B5C",
+    "West Ham United":           "#8B2942",
+    "Wolverhampton Wanderers":   "#FDB913",
+    "Wrexham":                   "#1B7A3D", // real kit is red — changed
+  };
+  const FALLBACK_TEAM_COLOR = "#8892A0";
 
   // true = Boro at home (index matches predict page fixtures array)
   const BORO_HOME = [
@@ -363,15 +422,34 @@
     const drawPct = Math.round(draw / total * 100);
     const awayPct = 100 - homePct - drawPct; // remainder absorbs rounding drift
 
-    document.getElementById('cs-pct-h').textContent = `${homePct}%`;
-    document.getElementById('cs-pct-d').textContent = `${drawPct}%`;
-    document.getElementById('cs-pct-a').textContent = `${awayPct}%`;
+    const homeColor = TEAM_COLORS[nextFixture.home_team] ?? FALLBACK_TEAM_COLOR;
+    const awayColor = TEAM_COLORS[nextFixture.away_team] ?? FALLBACK_TEAM_COLOR;
+    const drawColor = 'var(--chart-draw)';
+    const homeBadge = TEAM_BADGES[nextFixture.home_team];
+    const awayBadge = TEAM_BADGES[nextFixture.away_team];
 
     document.getElementById('cs-donut').style.background = `conic-gradient(
-      var(--chart-home) 0% ${homePct}%,
-      var(--chart-draw) ${homePct}% ${homePct + drawPct}%,
-      var(--red) ${homePct + drawPct}% 100%
+      ${homeColor} 0% ${homePct}%,
+      ${drawColor} ${homePct}% ${homePct + drawPct}%,
+      ${awayColor} ${homePct + drawPct}% 100%
     )`;
+
+    function keyItem(badge, name, color, pct, hasBorder) {
+      const swatch = badge
+        ? `<img src="${badge}" alt="" class="cs-key-badge">`
+        : `<span class="cs-dot" style="background:${color};${hasBorder ? 'border:1px solid #bbb;' : ''}"></span>`;
+      return `
+        <div class="cs-key-item">
+          ${swatch}
+          <span class="cs-key-name">${name}</span>
+          <strong>${pct}%</strong>
+        </div>`;
+    }
+
+    document.getElementById('cs-key').innerHTML =
+      keyItem(homeBadge, nextFixture.home_team, homeColor, homePct, false) +
+      keyItem(null, 'Draw', drawColor, drawPct, true) +
+      keyItem(awayBadge, nextFixture.away_team, awayColor, awayPct, false);
 
     document.getElementById('cs-caption').textContent =
       `${total} prediction${total === 1 ? '' : 's'} so far`;
