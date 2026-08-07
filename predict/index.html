@@ -53,18 +53,23 @@
   </div>
 </div>
 
-<div class="month-filter">
-  <button class="month-btn active" data-month="all"       onclick="filterMonth('all')">All</button>
-  <button class="month-btn"        data-month="August"    onclick="filterMonth('August')">Aug</button>
-  <button class="month-btn"        data-month="September" onclick="filterMonth('September')">Sep</button>
-  <button class="month-btn"        data-month="October"   onclick="filterMonth('October')">Oct</button>
-  <button class="month-btn"        data-month="November"  onclick="filterMonth('November')">Nov</button>
-  <button class="month-btn"        data-month="December"  onclick="filterMonth('December')">Dec</button>
-  <button class="month-btn"        data-month="January"   onclick="filterMonth('January')">Jan</button>
-  <button class="month-btn"        data-month="February"  onclick="filterMonth('February')">Feb</button>
-  <button class="month-btn"        data-month="March"     onclick="filterMonth('March')">Mar</button>
-  <button class="month-btn"        data-month="April"     onclick="filterMonth('April')">Apr</button>
-  <button class="month-btn"        data-month="May"       onclick="filterMonth('May')">May</button>
+<div class="sticky-header">
+  <div class="deadline-ticker" id="deadline-ticker">
+    Predictions lock in <span id="deadline-time">–</span>
+  </div>
+
+  <div class="month-filter">
+    <button class="month-btn" data-month="August"    onclick="scrollToMonth('August')">Aug</button>
+    <button class="month-btn" data-month="September" onclick="scrollToMonth('September')">Sep</button>
+    <button class="month-btn" data-month="October"   onclick="scrollToMonth('October')">Oct</button>
+    <button class="month-btn" data-month="November"  onclick="scrollToMonth('November')">Nov</button>
+    <button class="month-btn" data-month="December"  onclick="scrollToMonth('December')">Dec</button>
+    <button class="month-btn" data-month="January"   onclick="scrollToMonth('January')">Jan</button>
+    <button class="month-btn" data-month="February"  onclick="scrollToMonth('February')">Feb</button>
+    <button class="month-btn" data-month="March"     onclick="scrollToMonth('March')">Mar</button>
+    <button class="month-btn" data-month="April"     onclick="scrollToMonth('April')">Apr</button>
+    <button class="month-btn" data-month="May"       onclick="scrollToMonth('May')">May</button>
+  </div>
 </div>
 
 <h1 class="page-title">Predict <span>2026/27</span></h1>
@@ -75,7 +80,7 @@
 
 <div class="button-container">
   <div class="btn-row">
-    <button class="action-btn" onclick="calculatePoints()">Report</button>
+    <button class="action-btn" onclick="calculatePoints()">Article</button>
     <button class="action-btn action-btn--danger" id="clearScoresBtn">Clear All</button>
     <button class="action-btn action-btn--primary" onclick="savePredictions()">Save</button>
   </div>
@@ -165,6 +170,42 @@
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let currentUser = null;
+
+  // ── DEADLINE TICKER ──────────────────────────────────────
+  const PREDICTIONS_DEADLINE = new Date('2026-08-15T00:00:00Z').getTime();
+
+  let deadlineTimerId = null;
+  function updateDeadlineTicker() {
+    const ticker = document.getElementById('deadline-ticker');
+    const timeEl = document.getElementById('deadline-time');
+    const diff = PREDICTIONS_DEADLINE - Date.now();
+
+    if (diff <= 0) {
+      ticker.classList.add('locked');
+      ticker.textContent = 'Predictions are locked';
+      if (deadlineTimerId) clearInterval(deadlineTimerId);
+      return;
+    }
+
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    timeEl.textContent = `${d}d ${h}h ${m}m ${s}s`;
+  }
+  updateDeadlineTicker();
+  deadlineTimerId = setInterval(updateDeadlineTicker, 1000);
+
+  // ── SEASON MONTH ──────────────────────────────────────────
+  function getCurrentSeasonMonth() {
+    const monthNames = ['January','February','March','April','May','June','July',
+                         'August','September','October','November','December'];
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const inSeason = (y === 2026 && m >= 7) || (y === 2027 && m <= 4);
+    return inSeason ? monthNames[m] : null;
+  }
 
   const SHORT_NAMES = {
     "Sheffield United":          "Sheff Utd",
@@ -385,13 +426,57 @@
     document.getElementById('container').innerHTML = parts.join('');
   }
 
-  function filterMonth(month) {
+  let activeMonth = null;
+  function setActiveMonth(month) {
+    if (month === activeMonth) return;
+    activeMonth = month;
     document.querySelectorAll('.month-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.month === month);
+      const isActive = btn.dataset.month === month;
+      btn.classList.toggle('active', isActive);
+      if (isActive) btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     });
-    document.querySelectorAll('.predictor, .month-divider').forEach(el => {
-      el.style.display = (month === 'all' || el.dataset.month === month) ? '' : 'none';
+  }
+
+  function scrollToMonth(month) {
+    setActiveMonth(month);
+    const divider = document.querySelector(`.month-divider[data-month="${month}"]`);
+    if (divider) {
+      const y = divider.getBoundingClientRect().top + window.scrollY - document.querySelector('.sticky-header').offsetHeight - 12;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  }
+
+  // Active month = whichever fixture card is the first one sitting fully
+  // below the sticky header — i.e. the first full card visible at the top
+  // of the screen. A direct function of scroll position, so it's identical
+  // whether the user scrolls down or back up.
+  function updateActiveMonthFromScroll() {
+    const threshold = document.querySelector('.sticky-header').offsetHeight;
+    const cards = document.querySelectorAll('.predictor');
+    let current = null;
+    for (const card of cards) {
+      if (card.getBoundingClientRect().top >= threshold) {
+        current = card.dataset.month;
+        break;
+      }
+    }
+    if (!current && cards.length) current = cards[cards.length - 1].dataset.month;
+    if (current) setActiveMonth(current);
+  }
+
+  let scrollSpyTicking = false;
+  function onScrollSpy() {
+    if (scrollSpyTicking) return;
+    scrollSpyTicking = true;
+    requestAnimationFrame(() => {
+      updateActiveMonthFromScroll();
+      scrollSpyTicking = false;
     });
+  }
+
+  function setupMonthScrollSpy() {
+    window.addEventListener('scroll', onScrollSpy, { passive: true });
+    updateActiveMonthFromScroll();
   }
 
   function restoreScoreDisplay() {
@@ -616,12 +701,20 @@
 
   async function init() {
     const { data: { session } } = await sb.auth.getSession();
+    // Magic-link redirects always land on the live domain, so a local session is
+    // never obtainable here — skip the gate only when served from localhost/file,
+    // never on the deployed site.
+    const isLocalDev = ['localhost', '127.0.0.1'].includes(location.hostname) || location.protocol === 'file:';
+    if (!session && !isLocalDev) { window.location.href = '../landing/'; return; }
     currentUser = session?.user ?? null;
 
     renderFixtures();
     await loadPredictionsFromDB();
     restoreScoreDisplay();
     setupClearButton();
+    setupMonthScrollSpy();
+    const seasonMonth = getCurrentSeasonMonth();
+    if (seasonMonth) scrollToMonth(seasonMonth);
 
     sb.auth.onAuthStateChange((event, newSession) => {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && !currentUser) {

@@ -33,11 +33,30 @@ body {
   margin: 2rem 0 1rem;
 }
 
-/* ── MONTH FILTER ─────────────────────────────────── */
-.month-filter {
+/* ── STICKY HEADER (ticker + month filter) ────────── */
+.sticky-header {
   position: sticky;
   top: var(--nav-height);
   z-index: 99;
+}
+
+/* ── DEADLINE TICKER ──────────────────────────────── */
+.deadline-ticker {
+  background: var(--gold);
+  color: var(--black);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0.45rem 1rem;
+}
+.deadline-ticker #deadline-time { font-weight: 900; }
+.deadline-ticker.locked { background: var(--red-dark); color: var(--white); }
+
+/* ── MONTH FILTER ─────────────────────────────────── */
+.month-filter {
   background: var(--red);
   padding: 0.5rem 1rem;
   display: flex;
@@ -68,7 +87,7 @@ body {
   transition: background 0.15s, color 0.15s;
 }
 .month-btn:hover  { background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.9); }
-.month-btn.active { background: var(--black); color: var(--white); }
+.month-btn.active { background: var(--red-dark); color: var(--white); }
 
 /* ── PAGE TITLE ───────────────────────────────────── */
 .page-title {

@@ -355,9 +355,14 @@
       </div>`;
   }
 
-  buildProfile();
-  buildMostCommonScore();
-  buildSeasonSummary();
+  (async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = '../landing/'; return; }
+
+    buildProfile();
+    buildMostCommonScore();
+    buildSeasonSummary();
+  })();
 </script>
 
 </body>

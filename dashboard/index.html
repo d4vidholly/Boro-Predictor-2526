@@ -263,8 +263,7 @@
   // ── INIT ───────────────────────────────────────────────
   async function init() {
     const { data: { session } } = await sb.auth.getSession();
-    // TODO: restore auth redirect when sign-in flow is wired up
-    // if (!session) { window.location.href = '../landing/'; return; }
+    if (!session) { window.location.href = '../landing/'; return; }
     currentUser = session?.user ?? null;
 
     loadDashboard();
