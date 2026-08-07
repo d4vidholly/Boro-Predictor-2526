@@ -14,23 +14,23 @@
 
 - ✅ EFL released 2026/27 Championship fixtures 25 June 2026
 - ✅ 24 teams confirmed — 6 new teams in (Bolton, Burnley, Cardiff, Lincoln, West Ham, Wolves); 6 out (Coventry, Hull, Ipswich, Leicester, Oxford Utd, Sheff Wed)
-- ✅ Placeholder badges created for all 6 new teams in `assets/badges/` — replace with official SVGs before launch
 - ✅ `predict/index.html` — fixtures array updated with all 46 real dates, teams map and SHORT_NAMES updated, month divider index map recalculated
 - ✅ `dashboard/index.html` — same fixtures, teams map, and SHORT_NAMES updated to match
 - ✅ Stadium added to each fixture (Riverside Stadium for home, real away ground names confirmed)
 - ✅ Kick-off times added where confirmed (8 fixtures); rest show TBC pending TV selections
-- ⬜ Upsert real fixture dates into Supabase `fixtures` table (currently DB has placeholder dates — not blocking for launch but needed for `dashboard` next-fixture logic to work correctly)
-- ⬜ Replace placeholder badges with official SVGs for Bolton, Burnley, Cardiff, Lincoln, West Ham, Wolves
+- ✅ Real fixture dates upserted into Supabase `fixtures` table (7 Aug 2026 — was still the old placeholder schedule, corrected all 46 rows)
+- ✅ Official badges in place for all 6 new teams: Bolton, Burnley, Cardiff, Lincoln, West Ham, Wolves (7 Aug 2026)
 - ⬜ Update remaining kick-off times as Sky Sports confirms TV picks (typically 4–6 weeks out)
 
 ## Phase 2 — Open the App (now → August 14)
 
 - ✅ Login model decided: **invite-only**. `shouldCreateUser: false` on magic-link sign-in — only emails already in the auth DB can log in. Admin sends the first-time link manually once payment is confirmed.
 - ✅ Magic-link flow tested and hardened (see Admin Tool + Recent Changes below)
+- ✅ Auth redirects re-enabled on all gated pages, including `dashboard/index.html` (7 Aug 2026 — was the actual site-wide auth bypass bug, not just a dashboard TODO; see Recent UI Changes)
+- ✅ `support@boropredictor.com` set up (7 Aug 2026) — Namecheap free email forwarding to David's Gmail, plus Gmail "Send mail as" configured so replies can go out from that address too. Not yet tested end-to-end (queued for later).
 - ⬜ Confirm `predictions_locked = false` in Supabase settings table
 - ⬜ Confirm Supabase auth redirect URLs include `https://www.boropredictor.com/**`
 - ⬜ Invite paid players via the new admin tool (see below)
-- ⬜ Re-enable auth redirects on `dashboard/index.html` once invite flow is confirmed working end to end (currently commented out — `// TODO: restore auth redirect when sign-in flow is wired up`)
 
 ## Admin Tool (new, uncommitted)
 
@@ -56,8 +56,16 @@
 - Season report copy updated: manager references changed to Kim Hellberg, "top six" → "top eight", em-dashes removed from one line
 
 **Badges**
-- Fixed broken "Away" badge (pointed at a missing `overland.svg`; now points to `away.svg`)
-- Added three new badges: Dickens Away, Dickens Home, Midnite Blue
+- Fixed broken "Away" icon badge (pointed at a missing `overland.svg`; now points to `away.svg`)
+- Added three new icon badges: Dickens Away, Dickens Home, Midnite Blue
+- Official club badges now in place for all 6 new Championship teams: Bolton, Burnley, Cardiff, Lincoln, West Ham, Wolves (replaces the Phase 1 placeholders)
+
+**Email**
+- `support@boropredictor.com` set up via Namecheap free email forwarding → David's Gmail
+- Gmail "Send mail as" configured so replies can go out under that address too, routed through Gmail's own servers (no SPF record added yet — optional, only matters if deliverability becomes an issue)
+- Confirmed this doesn't affect Supabase's magic-link sending, since those come from Supabase's own infrastructure, not `boropredictor.com`'s MX records
+- Not yet tested end-to-end (queued for later)
+- Newsletter (Brevo) sending domain is a separate, still-open task — see Newsletter Stack section
 
 **Analyst page** — see "Analyst Page — Current Build" section below for full detail. Summary: Community Split and Most Common Score are now fully live with per-team colours/badges and "you predicted" reminders; Bookies is wired end-to-end but blocked on the odds cron; everything except the first two panels is blurred or hidden behind a "More features coming soon" overlay; the full gate modal is temporarily disabled for review (needs restoring before shipping).
 
@@ -271,8 +279,10 @@ Achievement badge slot is empty until earned. Once multiple badges are held, pla
 
 ## Newsletter Stack
 
+Separate from `support@boropredictor.com` (✅ done, see Phase 2) — that's a person reading a real inbox for queries/bugs; this is the automated bulk-sending pipeline for results/standings emails.
+
 - **Brevo** — chosen tool. Free at current scale (~50 users). HTML editor, unsubscribe handling, audience segmentation, and native Supabase integration to sync `waitlist` and `players` tables as separate audiences.
-- ⬜ Set up Brevo account and verify `boropredictor.com` sending domain
+- ⬜ Set up Brevo account and verify `boropredictor.com` sending domain (needs SPF/DKIM TXT records in Namecheap — separate from the MX-based email forwarding already set up)
 - ⬜ Connect Supabase → Brevo: sync `waitlist` table as one audience, `players` table as another
 - ⬜ **Wireframe the email layout** before building in Brevo — long-scroll HTML email with custom background, Boro Predictor branding (red/black, Barlow Condensed), badge/imagery blocks
 
