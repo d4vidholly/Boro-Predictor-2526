@@ -76,6 +76,7 @@
         </div>
         <p class="cs-caption" id="cs-caption"></p>
       </div>
+      <p class="cs-your-pick" id="cs-your-pick"></p>
     </div>
 
     <!-- ── 2: Most Common Score ── -->
@@ -92,6 +93,7 @@
       <div id="mcs-content">
         <div class="mcs-empty">Loading…</div>
       </div>
+      <p class="mcs-your-pick" id="mcs-your-pick"></p>
     </div>
 
     <!-- ── 3: Fan Profile ── -->
@@ -253,6 +255,14 @@
     "Wrexham":                   "#1B7A3D", // real kit is red — changed
   };
   const FALLBACK_TEAM_COLOR = "#8892A0";
+  const DRAW_COLOR_DARK = "#767B85"; // darker than --gray so it doesn't blend into the bar background
+
+  function getSavedScore(fixtureIndex) {
+    const saved = localStorage.getItem('boroScores');
+    if (!saved) return null;
+    const scores = JSON.parse(saved);
+    return scores?.[fixtureIndex] ?? null;
+  }
 
   // true = Boro at home (index matches predict page fixtures array)
   const BORO_HOME = [
@@ -352,10 +362,12 @@
   function buildMostCommonScore(nextFixture, preds) {
     const el = document.getElementById('mcs-content');
     const fixtureEl = document.querySelector('.mcs-fixture');
+    const yourPickEl = document.getElementById('mcs-your-pick');
 
     if (!nextFixture) {
       fixtureEl.innerHTML = '<span>Season complete</span>';
       el.innerHTML = '<div class="mcs-empty">No more fixtures to predict this season.</div>';
+      yourPickEl.textContent = '';
       return;
     }
 
@@ -363,6 +375,9 @@
       <span>${nextFixture.home_team}</span>
       <span class="mcs-vs">vs</span>
       <span>${nextFixture.away_team}</span>`;
+
+    const savedScore = getSavedScore(nextFixture.fixture_index);
+    yourPickEl.textContent = savedScore ? `You predicted: ${savedScore.home} – ${savedScore.away}` : '';
 
     if (!preds || preds.length === 0) {
       el.innerHTML = '<div class="mcs-empty">No predictions saved for this fixture yet.</div>';
@@ -380,8 +395,12 @@
     const [h, a] = topKey.split('-');
     const pct = Math.round(topCount / preds.length * 100);
 
+    const favorColor = Number(h) > Number(a) ? (TEAM_COLORS[nextFixture.home_team] ?? FALLBACK_TEAM_COLOR)
+      : Number(h) < Number(a) ? (TEAM_COLORS[nextFixture.away_team] ?? FALLBACK_TEAM_COLOR)
+      : DRAW_COLOR_DARK;
+
     el.innerHTML = `
-      <div class="mcs-score">${h} – ${a}</div>
+      <div class="mcs-score" style="color:${favorColor}">${h} – ${a}</div>
       <div class="mcs-bar-wrap"><div class="mcs-bar-fill" style="width:${pct}%"></div></div>
       <div class="mcs-meta">
         <span>${topCount} of ${preds.length} player${preds.length === 1 ? '' : 's'}</span>
@@ -393,17 +412,38 @@
   function buildCommunitySplit(nextFixture, preds) {
     const fixtureEl = document.getElementById('cs-fixture');
     const contentEl = document.getElementById('cs-content');
+    const yourPickEl = document.getElementById('cs-your-pick');
 
     if (!nextFixture) {
       fixtureEl.innerHTML = '<span>Season complete</span>';
       contentEl.innerHTML = '<div class="mcs-empty">No more fixtures to predict this season.</div>';
+      yourPickEl.textContent = '';
       return;
     }
 
+    const homeColor = TEAM_COLORS[nextFixture.home_team] ?? FALLBACK_TEAM_COLOR;
+    const awayColor = TEAM_COLORS[nextFixture.away_team] ?? FALLBACK_TEAM_COLOR;
+    const homeBadge = TEAM_BADGES[nextFixture.home_team];
+    const awayBadge = TEAM_BADGES[nextFixture.away_team];
+
     fixtureEl.innerHTML = `
-      <span>${nextFixture.home_team}</span>
-      <span class="cs-vs">vs</span>
-      <span>${nextFixture.away_team}</span>`;
+      ${homeBadge ? `<img src="${homeBadge}" alt="" class="cs-fixture-badge">` : '<span class="cs-fixture-badge"></span>'}
+      <div class="cs-fixture-teams">
+        <span>${nextFixture.home_team}</span>
+        <span class="cs-vs">vs</span>
+        <span>${nextFixture.away_team}</span>
+      </div>
+      ${awayBadge ? `<img src="${awayBadge}" alt="" class="cs-fixture-badge">` : '<span class="cs-fixture-badge"></span>'}`;
+
+    const savedScore = getSavedScore(nextFixture.fixture_index);
+    if (savedScore) {
+      const winner = savedScore.home > savedScore.away ? nextFixture.home_team
+        : savedScore.home < savedScore.away ? nextFixture.away_team
+        : 'Draw';
+      yourPickEl.textContent = `You predicted: ${winner}`;
+    } else {
+      yourPickEl.textContent = '';
+    }
 
     if (!preds || preds.length === 0) {
       contentEl.innerHTML = '<div class="mcs-empty">No predictions yet.</div>';
@@ -421,12 +461,7 @@
     const homePct = Math.round(home / total * 100);
     const drawPct = Math.round(draw / total * 100);
     const awayPct = 100 - homePct - drawPct; // remainder absorbs rounding drift
-
-    const homeColor = TEAM_COLORS[nextFixture.home_team] ?? FALLBACK_TEAM_COLOR;
-    const awayColor = TEAM_COLORS[nextFixture.away_team] ?? FALLBACK_TEAM_COLOR;
     const drawColor = 'var(--chart-draw)';
-    const homeBadge = TEAM_BADGES[nextFixture.home_team];
-    const awayBadge = TEAM_BADGES[nextFixture.away_team];
 
     document.getElementById('cs-donut').style.background = `conic-gradient(
       ${homeColor} 0% ${homePct}%,
@@ -434,22 +469,19 @@
       ${awayColor} ${homePct + drawPct}% 100%
     )`;
 
-    function keyItem(badge, name, color, pct, hasBorder) {
-      const swatch = badge
-        ? `<img src="${badge}" alt="" class="cs-key-badge">`
-        : `<span class="cs-dot" style="background:${color};${hasBorder ? 'border:1px solid #bbb;' : ''}"></span>`;
+    function keyItem(name, color, pct, hasBorder) {
       return `
         <div class="cs-key-item">
-          ${swatch}
+          <span class="cs-dot" style="background:${color};${hasBorder ? 'border:1px solid #bbb;' : ''}"></span>
           <span class="cs-key-name">${name}</span>
           <strong>${pct}%</strong>
         </div>`;
     }
 
     document.getElementById('cs-key').innerHTML =
-      keyItem(homeBadge, nextFixture.home_team, homeColor, homePct, false) +
-      keyItem(null, 'Draw', drawColor, drawPct, true) +
-      keyItem(awayBadge, nextFixture.away_team, awayColor, awayPct, false);
+      keyItem(nextFixture.home_team, homeColor, homePct, false) +
+      keyItem('Draw', drawColor, drawPct, true) +
+      keyItem(nextFixture.away_team, awayColor, awayPct, false);
 
     document.getElementById('cs-caption').textContent =
       `${total} prediction${total === 1 ? '' : 's'} so far`;

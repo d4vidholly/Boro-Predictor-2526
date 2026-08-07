@@ -93,7 +93,7 @@
 .cs-fixture {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 0.5rem;
   font-size: 0.82rem;
   font-weight: 700;
@@ -103,6 +103,21 @@
   padding: 0.5rem 0.75rem;
   margin-bottom: 1.25rem;
   text-align: center;
+}
+
+.cs-fixture-teams {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.cs-fixture-badge {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .cs-vs {
@@ -187,6 +202,18 @@
   font-size: 0.72rem;
   color: #aaa;
   margin-top: 0.9rem;
+}
+
+.cs-your-pick,
+.mcs-your-pick {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #777;
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gray);
+  min-height: 1em;
 }
 
 /* ── MOST COMMON SCORE ── */
