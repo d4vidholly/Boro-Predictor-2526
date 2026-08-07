@@ -22,7 +22,7 @@
 - ✅ Official badges in place for all 6 new teams: Bolton, Burnley, Cardiff, Lincoln, West Ham, Wolves (7 Aug 2026)
 - ⬜ Update remaining kick-off times as Sky Sports confirms TV picks (typically 4–6 weeks out)
 
-## Phase 2 — Open the App (now → August 14)
+## Phase 2 — Open the App ✅ Complete
 
 - ✅ Login model decided: **invite-only**. `shouldCreateUser: false` on magic-link sign-in — only emails already in the auth DB can log in.
 - ✅ Player onboarding process decided: **manual, no admin tool needed**. Once a player pays, David adds them directly in Supabase (Authentication → Users), then tells them to request their login link themselves from the landing page — `shouldCreateUser: false` lets it through since they now exist in the auth DB. The `admin/index.html` invite-sending tool built earlier this week is not being used; see note below.
@@ -30,7 +30,7 @@
 - ✅ Auth redirects re-enabled on all gated pages, including `dashboard/index.html` (7 Aug 2026 — was the actual site-wide auth bypass bug, not just a dashboard TODO; see Recent UI Changes)
 - ✅ `support@boropredictor.com` set up (7 Aug 2026) — Namecheap free email forwarding to David's Gmail, plus Gmail "Send mail as" configured so replies can go out from that address too. Not yet tested end-to-end (queued for later).
 - ✅ Predictions deadline now enforced at the database level (7 Aug 2026) — see Phase 3, moved up since it was implemented today rather than waiting for kickoff
-- ⬜ Confirm Supabase auth redirect URLs include `https://www.boropredictor.com/**`
+- ✅ Confirmed Supabase auth redirect URLs (7 Aug 2026) — Site URL is `https://www.boropredictor.com`, redirect allow-list has `https://www.boropredictor.com/**`, matching `CLAUDE.md`. Nothing to fix.
 
 ## Admin Tool — not in use
 
