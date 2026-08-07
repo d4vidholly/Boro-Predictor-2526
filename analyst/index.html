@@ -32,6 +32,8 @@
   </button>
 </nav>
 
+<div class="dev-banner">In development — some panels are still being built</div>
+
 <main id="main-content">
 
 <div class="page">
@@ -48,28 +50,31 @@
       <div class="panel-title">Community Split</div>
       <p class="panel-desc">How the league called the next fixture.</p>
 
-      <div class="cs-fixture">
+      <div class="cs-fixture" id="cs-fixture">
         <span>Middlesbrough</span>
         <span class="cs-vs">vs</span>
         <span>Swansea City</span>
       </div>
 
-      <div class="cs-chart-wrap">
-        <div class="cs-donut"></div>
-        <div class="cs-key">
-          <div class="cs-key-item">
-            <span class="cs-dot cs-dot-h"></span>
-            Home win <strong>58%</strong>
-          </div>
-          <div class="cs-key-item">
-            <span class="cs-dot cs-dot-d"></span>
-            Draw <strong>25%</strong>
-          </div>
-          <div class="cs-key-item">
-            <span class="cs-dot cs-dot-a"></span>
-            Away win <strong>17%</strong>
+      <div id="cs-content">
+        <div class="cs-chart-wrap">
+          <div class="cs-donut" id="cs-donut"></div>
+          <div class="cs-key">
+            <div class="cs-key-item">
+              <span class="cs-dot cs-dot-h"></span>
+              Home win <strong id="cs-pct-h">—</strong>
+            </div>
+            <div class="cs-key-item">
+              <span class="cs-dot cs-dot-d"></span>
+              Draw <strong id="cs-pct-d">—</strong>
+            </div>
+            <div class="cs-key-item">
+              <span class="cs-dot cs-dot-a"></span>
+              Away win <strong id="cs-pct-a">—</strong>
+            </div>
           </div>
         </div>
+        <p class="cs-caption" id="cs-caption"></p>
       </div>
     </div>
 
@@ -158,7 +163,7 @@
   <p class="copy">Boro Predictor is not affiliated with Middlesbrough FC. For recreational use only.</p>
 </footer>
 
-<!-- ── ANALYST GATE MODAL ── -->
+<!-- ── ANALYST GATE MODAL (temporarily disabled for review — restore before shipping) ──
 <div class="gate-overlay" id="gate-overlay" role="dialog" aria-modal="true" aria-labelledby="gate-title">
   <div class="gate-modal">
     <span class="gate-icon">📊</span>
@@ -166,6 +171,8 @@
     <p class="gate-desc">Your personal stats hub for the 26/27 season. Fan Profile and Your Season are live — community panels and bookies odds connect as the season progresses.</p>
   </div>
 </div>
+-->
+
 
 <script>
   // ── NAV HAMBURGER ──
@@ -268,15 +275,35 @@
       </div>`;
   }
 
-  // ── MOST COMMON SCORE ──
-  // Requires a Supabase RLS policy allowing anon reads of predictions
-  async function buildMostCommonScore() {
-    const el = document.getElementById('mcs-content');
+  // ── NEXT FIXTURE ──
+  // The lowest fixture_index with no row in `results` yet. Fixtures are
+  // stored in strict chronological (season) order, so this stays correct
+  // all season without depending on real match_date values being filled in.
+  async function getNextFixture() {
+    const [{ data: allFixtures }, { data: results }] = await Promise.all([
+      sb.from('fixtures').select('fixture_index, home_team, away_team').order('fixture_index'),
+      sb.from('results').select('fixture_index')
+    ]);
+    if (!allFixtures || allFixtures.length === 0) return null;
+    const played = new Set((results || []).map(r => r.fixture_index));
+    return allFixtures.find(f => !played.has(f.fixture_index)) || null;
+  }
 
-    const { data: preds } = await sb
-      .from('predictions')
-      .select('home_goals, away_goals')
-      .eq('fixture_index', 0);
+  // ── MOST COMMON SCORE ──
+  function buildMostCommonScore(nextFixture, preds) {
+    const el = document.getElementById('mcs-content');
+    const fixtureEl = document.querySelector('.mcs-fixture');
+
+    if (!nextFixture) {
+      fixtureEl.innerHTML = '<span>Season complete</span>';
+      el.innerHTML = '<div class="mcs-empty">No more fixtures to predict this season.</div>';
+      return;
+    }
+
+    fixtureEl.innerHTML = `
+      <span>${nextFixture.home_team}</span>
+      <span class="mcs-vs">vs</span>
+      <span>${nextFixture.away_team}</span>`;
 
     if (!preds || preds.length === 0) {
       el.innerHTML = '<div class="mcs-empty">No predictions saved for this fixture yet.</div>';
@@ -301,6 +328,53 @@
         <span>${topCount} of ${preds.length} player${preds.length === 1 ? '' : 's'}</span>
         <span>${pct}%</span>
       </div>`;
+  }
+
+  // ── COMMUNITY SPLIT ──
+  function buildCommunitySplit(nextFixture, preds) {
+    const fixtureEl = document.getElementById('cs-fixture');
+    const contentEl = document.getElementById('cs-content');
+
+    if (!nextFixture) {
+      fixtureEl.innerHTML = '<span>Season complete</span>';
+      contentEl.innerHTML = '<div class="mcs-empty">No more fixtures to predict this season.</div>';
+      return;
+    }
+
+    fixtureEl.innerHTML = `
+      <span>${nextFixture.home_team}</span>
+      <span class="cs-vs">vs</span>
+      <span>${nextFixture.away_team}</span>`;
+
+    if (!preds || preds.length === 0) {
+      contentEl.innerHTML = '<div class="mcs-empty">No predictions yet.</div>';
+      return;
+    }
+
+    let home = 0, draw = 0, away = 0;
+    preds.forEach(p => {
+      if (p.home_goals > p.away_goals)      home++;
+      else if (p.home_goals < p.away_goals) away++;
+      else                                   draw++;
+    });
+
+    const total   = preds.length;
+    const homePct = Math.round(home / total * 100);
+    const drawPct = Math.round(draw / total * 100);
+    const awayPct = 100 - homePct - drawPct; // remainder absorbs rounding drift
+
+    document.getElementById('cs-pct-h').textContent = `${homePct}%`;
+    document.getElementById('cs-pct-d').textContent = `${drawPct}%`;
+    document.getElementById('cs-pct-a').textContent = `${awayPct}%`;
+
+    document.getElementById('cs-donut').style.background = `conic-gradient(
+      var(--chart-home) 0% ${homePct}%,
+      var(--chart-draw) ${homePct}% ${homePct + drawPct}%,
+      var(--red) ${homePct + drawPct}% 100%
+    )`;
+
+    document.getElementById('cs-caption').textContent =
+      `${total} prediction${total === 1 ? '' : 's'} so far`;
   }
 
   // ── BOOKIES: show player's saved prediction for fixture 0 ──
@@ -357,11 +431,23 @@
 
   (async function init() {
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) { window.location.href = '../landing/'; return; }
+    // Magic-link redirects always land on the live domain, so a local session is
+    // never obtainable here — skip the gate only when served from localhost/file,
+    // never on the deployed site.
+    const isLocalDev = ['localhost', '127.0.0.1'].includes(location.hostname) || location.protocol === 'file:';
+    if (!session && !isLocalDev) { window.location.href = '../landing/'; return; }
 
     buildProfile();
-    buildMostCommonScore();
     buildSeasonSummary();
+
+    // Community Split and Most Common Score both key off the same next
+    // fixture and the same predictions rows, so fetch once and share.
+    const nextFixture = await getNextFixture();
+    const preds = nextFixture
+      ? (await sb.from('predictions').select('home_goals, away_goals').eq('fixture_index', nextFixture.fixture_index)).data
+      : [];
+    buildMostCommonScore(nextFixture, preds);
+    buildCommunitySplit(nextFixture, preds);
   })();
 </script>
 

@@ -1,7 +1,23 @@
 /* ── CHART COLOURS (secondary — community split donut + key) ── */
 :root {
-  --chart-home: var(--chart-home);
-  --chart-draw: var(--chart-draw);
+  --chart-home: var(--blue);
+  --chart-draw: var(--gray);
+}
+
+/* ── DEV BANNER ── */
+.dev-banner {
+  position: sticky;
+  top: var(--nav-height);
+  z-index: 99;
+  background: var(--gold);
+  color: var(--black);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0.45rem 1rem;
 }
 
 /* ── PAGE ── */
@@ -154,6 +170,13 @@
   font-weight: 800;
   color: var(--black);
   font-size: 0.85rem;
+}
+
+.cs-caption {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #aaa;
+  margin-top: 0.9rem;
 }
 
 /* ── MOST COMMON SCORE ── */
