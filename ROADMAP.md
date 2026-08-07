@@ -42,6 +42,28 @@
 - ⬜ Decide on the passphrase / auth approach before this goes live (currently a client-side passphrase check — fine for now but worth hardening before relying on it)
 - ⬜ Commit `admin/` to the repo (currently untracked)
 
+## Recent UI Changes (7 August 2026)
+
+**Security**
+- Fixed auth bypass: `dashboard/`, `predict/`, `ladder/`, `account/`, `analyst/` were all reachable without logging in (redirect was missing or commented out on every gated page) — all five now redirect to `../landing/` when there's no session. A localhost/`file://`-only dev bypass was added to `predict/` and `analyst/` so they're still testable without redeploying, but it never applies on the live domain.
+- Fixed ladder RLS: `players` table only allowed each player to read their own row, which silently collapsed the `ladder` view down to one row per viewer. Replaced with a broad authenticated-read policy (`players_select_all`), matching the pattern already used for `predictions`/`fixtures`/`results`/`settings`.
+- Fixed stale `fixtures` table data: Supabase still had the old placeholder schedule (fixture 0 = Middlesbrough vs Swansea City) while `predict/index.html` had since been updated with the real 2026/27 fixtures (fixture 0 = Middlesbrough vs Lincoln City, 15 Aug). Corrected all 46 rows in place; `predictions`/`results` were unaffected since they only reference `fixture_index`, not team names.
+
+**Predict page**
+- Deadline countdown ticker added (gold/black), counting down to 00:00 15/8/26 GMT
+- Month tabs no longer hide fixtures — all 46 always shown; tabs now jump-scroll to that month's section, and the active tab updates via scroll position (based on the first fully-visible fixture card) as the user scrolls manually
+- "Report" button renamed to "Article"; Gazette date updated to May 2027
+- Season report copy updated: manager references changed to Kim Hellberg, "top six" → "top eight", em-dashes removed from one line
+
+**Badges**
+- Fixed broken "Away" badge (pointed at a missing `overland.svg`; now points to `away.svg`)
+- Added three new badges: Dickens Away, Dickens Home, Midnite Blue
+
+**Analyst page** — see "Analyst Page — Current Build" section below for full detail. Summary: Community Split and Most Common Score are now fully live with per-team colours/badges and "you predicted" reminders; Bookies is wired end-to-end but blocked on the odds cron; everything except the first two panels is blurred or hidden behind a "More features coming soon" overlay; the full gate modal is temporarily disabled for review (needs restoring before shipping).
+
+**Dashboard**
+- Prediction card upgrade prompt: dropped the "Premium" label, reworded to "See what everyone else is predicting", CTA changed from "Upgrade" to "Analyst Mode"
+
 ## Recent UI Changes (6 August 2026)
 
 **Login / auth**
@@ -90,50 +112,48 @@ Users who sign up on the landing page but never enter the competition sit only i
 
 ---
 
-## Analyst Page — Current Build
+## Analyst Page — Current Build (updated 7 Aug 2026)
 
-Four panels on `analyst/index.html`. Gate modal on entry. Fan Profile is live (reads localStorage); others connect to data as it becomes available.
+Six panels on `analyst/index.html`. Only the first two are finished and visible; everything else is blurred or hidden behind a "More features coming soon" overlay so the page can be shown without looking half-built.
 
-### Panel 1 — Community Split
-**What:** Pie/donut chart showing how the 24-player community split their prediction for the next fixture (home win / draw / away win).
+- ⬜ **The full-page "Coming Soon" gate modal is currently disabled** (commented out in the HTML, `<!-- ANALYST GATE MODAL (temporarily disabled for review...) -->`) so it could be worked on locally. A lighter gold "In development" banner is shown instead. **Restore the gate modal before real players are pointed at this page** — right now anyone who navigates here directly sees the live panels below, not a blocking wall.
 
-**Current state:** Placeholder percentages (58% / 25% / 17%) hardcoded for Boro vs Swansea.
+### Panel 1 — Community Split ✅ Live
+**What:** Donut chart showing how the community split their prediction (home win / draw / away win) for the next unplayed fixture.
 
-**To make live:**
-- Query `predictions` table for fixture index 0 (next match), count predicted outcomes per player
-- Determine each player's predicted result (Boro win / draw / loss) from their scoreline
-- Calculate percentages and re-render the conic-gradient donut dynamically
-- Update fixture label from `fixtures` table or hardcoded array
+- Shares one `predictions` query with Most Common Score via a common `getNextFixture()` helper (lowest `fixture_index` with no `results` row — resilient to `match_date` still being mostly `NULL`)
+- Home/away badges pinned to the left/right edges of the fixture header line; team names centred between them
+- Key rows use colour-coded dots (not badges) — Draw stays neutral grey
+- Donut segments + dots use a per-team `TEAM_COLORS` map: Boro is always app-red, other traditionally-red clubs (Bristol City, Charlton, Sheffield United, Southampton, Stoke, Wrexham) got substitute colours so they don't clash with Boro; Lincoln City is black
+- "You predicted: [winner/Draw]" reminder at the bottom, reading the player's own saved localStorage prediction
+- Handles zero-predictions and season-complete states
 
-### Panel 2 — Bookies Probability
-**What:** Shows the implied probability of the player's own predicted scoreline based on betting market odds. Colour coded by chance: <5% Long Shot · 5–10% Possible · 10–15% Decent · 15%+ Strong.
+### Panel 2 — Most Common Score ✅ Live
+**What:** The exact scoreline most players predicted for the next fixture, and what % called it.
 
-**Current state (7 Aug 2026):** ✅ Built and wired end-to-end.
+- Bar fill colours to whichever side the scoreline favours (home/away team colour, or a darker grey `#767B85` for a draw — distinct from the pale bar-track grey)
+- "You predicted: [score]" reminder at the bottom
+
+### Panel 3 — Fan Profile ✅ Live (blurred)
+**What:** Classifies the player as Pessimist / Realist / Optimist based on their own predicted Boro season points total vs actual results so far.
+
+**Thresholds:** 🌧️ Pessimist <50 pts · 🔬 Realist 50–74 pts · ☀️ Optimist 75+ pts
+
+Currently sits behind the blur overlay along with Bookies — functionally complete, just not part of the public-facing set yet.
+
+### Panel 4 — Bookies Probability — built, blocked on external data (blurred)
+**What:** Implied probability of the player's own predicted scoreline based on betting market odds. Colour coded: <5% Long Shot · 5–10% Possible · 10–15% Decent · 15%+ Strong.
+
 - `odds` table + RLS created in Supabase (SELECT-only for authenticated users)
 - `supabase/functions/sync-odds/index.ts` — finds the next fixture, matches it on The Odds API, pulls `correct_score` odds for a single fixed UK bookmaker (bet365, falls back to first available), upserts into `odds`
-- Deployed and manually invoked successfully — key valid, event matching works
-- `analyst/index.html` Bookies panel reads from `odds`, computes implied probability, applies the colour tiers
-- ⬜ **Daily cron not yet scheduled** — creating it in Dashboard → Integrations/Cron failed with `42P01: relation cron.job does not exist` because the `pg_cron` extension isn't enabled. Fix: Database → Extensions → enable `pg_cron`, then recreate the cron job (Type: Supabase Edge Function → `sync-odds`, schedule `0 8 * * *`, Authorization header with the anon key, timeout 5000ms — see cron job fields already filled in once, just needs pg_cron enabled first)
-- ⬜ For now, the `correct_score` market isn't yet covered by The Odds API for the next fixture (Middlesbrough v Lincoln, 15 Aug) even though it's live on Oddschecker — likely an ingestion lag on The Odds API's side, not a bug. Re-check closer to kickoff once the cron is running.
+- Deployed and manually invoked successfully — key valid, event matching works, frontend reads from `odds` and applies the colour tiers correctly
+- ⬜ **Daily cron not yet scheduled** — creating it in Dashboard → Integrations/Cron failed with `42P01: relation cron.job does not exist` because the `pg_cron` extension isn't enabled. Fix: Database → Extensions → enable `pg_cron`, then recreate the cron job (Type: Supabase Edge Function → `sync-odds`, schedule `0 8 * * *`, Authorization header with the anon key, timeout 5000ms — cron job fields already filled in once, just needs pg_cron enabled first)
+- ⬜ The `correct_score` market isn't yet covered by The Odds API for the next fixture (Middlesbrough v Lincoln, 15 Aug) even though it's live on Oddschecker — likely an ingestion lag on The Odds API's side, not a bug. Re-check closer to kickoff once the cron is running.
 
-### Panel 3 — Fan Profile
-**What:** Classifies the player as Pessimist / Realist / Optimist based purely on their own predicted Boro season points total.
+### Panels 5 & 6 — Season Achievement / Your Season — hidden entirely
+Both fully commented out in the HTML (not just blurred) until Season Achievement is ready to build. "Your Season" was previously live (season points/outlook summary from localStorage) but is switched off along with Season Achievement for now — re-enable both together.
 
-**Current state:** ✅ Live — reads `boroScores` from localStorage, calculates predicted wins/draws/losses, determines profile.
-
-**Thresholds:**
-- 🌧️ **Pessimist** — <50 pts predicted
-- 🔬 **Realist** — 50–74 pts predicted
-- ☀️ **Optimist** — 75+ pts predicted
-
-**Future improvement:** Once actual results are in, compare predicted vs actual to refine the archetype (e.g. "Realist who correctly called 7 Boro wins").
-
-### Panel 4 — Season Achievement
-**What:** The player's rarest correct prediction — the scoreline they got right that the fewest other players also got right.
-
-**Current state:** Locked state shown (no blur). Preview example shown in greyed-out card.
-
-**To make live:**
+**Season Achievement (not yet built):** The player's rarest correct prediction — the scoreline they got right that the fewest other players also got right.
 - Requires results to be entered in `results` table
 - Query: join `predictions` + `results` to find player's correct exact-score predictions
 - For each correct prediction, count how many other players predicted the same scoreline
