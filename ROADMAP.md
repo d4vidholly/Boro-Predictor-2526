@@ -253,6 +253,7 @@ The badge picker modal (`account/index.html`) has a "Challenges" section below t
 
 - **Off the Mark** (`assets/badges/icons/offthemark.svg`) — "First Win". Unlocks **automatically** on the player's first **exact scoreline** (the 4-point hit per the scoring rules — not just a correct W/D/L). `checkOffTheMark()` reuses the `ladder` VIEW's `correct_scores` column (already computes this per player) rather than re-deriving it client-side from `predictions` + `results`.
 - **Manager of the Month** (`assets/badges/icons/august.svg`) — "August Manager of the Month". Unlocks **manually, by design** — no "most points in the month" query. New `monthly_awards` table (`month TEXT UNIQUE`, `player_id`) holds one row per month; David inserts the winner himself via SQL Editor once the month is over. RLS only allows authenticated SELECT — no client can write to it. `checkManagerOfTheMonth()` filters on `AUGUST_MOTM_MONTH = '2026-08'`, a constant fixed to this specific badge (not a "current month" pointer to bump — this badge/icon is permanently about August, so advancing the constant for a future month's badge would silently re-lock August's winner).
+- **Deadpool** (`assets/badges/icons/deadpool.svg`, added 12 Aug 2026) — "Correct score v Wrexham". Unlocks **automatically** on an exact scoreline in either Boro-Wrexham fixture, home or away (`fixture_index` 13 or 27). `checkDeadpool()` checks both fixtures in one query pair.
 
 Each `CHALLENGE_BADGES` entry carries its own `check` function; `openBadgeModal()` only re-runs `check()` for badges still locked (an unlock is permanent, so no need to re-query an already-earned one on every subsequent open) and shares one render helper with the regular icon grid.
 
@@ -335,6 +336,7 @@ Earned badges displayed on the ladder (player chooses which to show if they hold
 | **Relegated** | Finish 22nd, 23rd or 24th in the final table |
 | **Full House** | Correct scoreline on Boxing Day |
 | **Eye Spy** | Correct scoreline v Southampton |
+| **Deadpool** ✅ built | Correct scoreline v Wrexham (either fixture) — see "Account Page — Challenges" above |
 | **Loyal Supporter** | Upgrade to the Analyst Tier |
 
 

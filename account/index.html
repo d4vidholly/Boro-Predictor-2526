@@ -220,12 +220,33 @@
     return !!data;
   }
 
+  // Deadpool unlocks automatically: an exact scoreline (4-point hit) in
+  // either Boro-Wrexham fixture, home or away (13 = Wrexham v Boro,
+  // 27 = Boro v Wrexham — see ladder/schema.sql's fixtures INSERT).
+  const DEADPOOL_FIXTURES = [13, 27];
+
+  async function checkDeadpool() {
+    if (!currentUser) return false;
+    const [{ data: preds }, { data: results }] = await Promise.all([
+      sb.from('predictions').select('fixture_index, home_goals, away_goals')
+        .eq('player_id', currentUser.id).in('fixture_index', DEADPOOL_FIXTURES),
+      sb.from('results').select('fixture_index, home_goals, away_goals')
+        .in('fixture_index', DEADPOOL_FIXTURES),
+    ]);
+    if (!preds || !results) return false;
+    return results.some(r => {
+      const p = preds.find(p => p.fixture_index === r.fixture_index);
+      return p && p.home_goals === r.home_goals && p.away_goals === r.away_goals;
+    });
+  }
+
   // ── CHALLENGE BADGES (locked until their `check` returns true — not
   // selectable until then). `unlocked` starts false and is only ever
   // re-checked while still false — see openBadgeModal().
   const CHALLENGE_BADGES = [
     { id: 'icon-offthemark', name: 'Off the Mark',          desc: 'First Win',                     path: '../assets/badges/icons/offthemark.svg', unlocked: false, check: checkOffTheMark },
     { id: 'icon-august',     name: 'Manager of the Month',  desc: 'August Manager of the Month',   path: '../assets/badges/icons/august.svg',      unlocked: false, check: checkManagerOfTheMonth },
+    { id: 'icon-deadpool',   name: 'Deadpool',              desc: 'Correct score v Wrexham',       path: '../assets/badges/icons/deadpool.svg',    unlocked: false, check: checkDeadpool },
   ];
 
   // Every badge a player could have selected, regardless of which list it
