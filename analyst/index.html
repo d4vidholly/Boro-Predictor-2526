@@ -107,15 +107,14 @@
       </div>
 
       <div class="prob-pct-row">
-        <span class="prob-pct-value" id="prob-pct-value">—</span>
         <span class="prob-chip prob-soon" id="prob-chip">Odds coming soon</span>
       </div>
       <div class="prob-track"><div class="prob-fill" id="prob-fill" style="width:0%"></div></div>
-      <p class="prob-note">Odds converted to implied probability · Colour coded: &lt;1.5% long shot · 1.5–4% unlikely · 4–8% okay · 8–12% likely · 12%+ strong</p>
+      <p class="prob-note">Based on betting market odds · Strong is typically the top couple of scorelines · Long Shot &lt;2% · Fair Chance 2–6% · Good Chance 6–12% · Strong 12%+</p>
     </div>
 
     <!-- ── 4: Fan Profile ── -->
-    <div class="panel panel-wide">
+    <div class="panel">
       <div class="panel-title">Fan Profile</div>
       <p class="panel-desc">Your outlook vs Boro's actual points from completed games.</p>
       <div id="profile-content">
@@ -502,21 +501,22 @@
   async function buildBookies(nextFixture) {
     const labelEl = document.getElementById('prob-match-label');
     const scoreEl = document.getElementById('prob-scoreline');
-    const pctEl   = document.getElementById('prob-pct-value');
     const chipEl  = document.getElementById('prob-chip');
     const fillEl  = document.getElementById('prob-fill');
 
-    function setState(chipClass, chipText, pctText, fillPct) {
-      chipEl.className = `prob-chip ${chipClass}`;
+    // tierKey drives both the chip (.prob-${key}) and the bar fill
+    // (.prob-fill-${key}) so they can never fall out of sync with each other.
+    function setState(tierKey, chipText, fillPct) {
+      chipEl.className = `prob-chip prob-${tierKey}`;
       chipEl.textContent = chipText;
-      pctEl.textContent = pctText;
+      fillEl.className = `prob-fill prob-fill-${tierKey}`;
       fillEl.style.width = `${fillPct}%`;
     }
 
     if (!nextFixture) {
       labelEl.textContent = 'Season complete';
       scoreEl.textContent = '—';
-      setState('prob-soon', 'No upcoming fixture', '—', 0);
+      setState('soon', 'No upcoming fixture', 0);
       return;
     }
 
@@ -528,7 +528,7 @@
 
     if (!s) {
       scoreEl.textContent = '—';
-      setState('prob-soon', 'Predict this fixture first', '—', 0);
+      setState('soon', 'Predict this fixture first', 0);
       return;
     }
 
@@ -540,35 +540,36 @@
       .eq('fixture_index', nextFixture.fixture_index);
 
     if (!fixtureOdds || fixtureOdds.length === 0) {
-      setState('prob-soon', 'Odds coming soon', '—', 0);
+      setState('soon', 'Odds coming soon', 0);
       return;
     }
 
     const match = fixtureOdds.find(o => o.home_goals === s.home && o.away_goals === s.away);
     if (!match) {
-      setState('prob-soon', 'Not covered by odds market', '—', 0);
+      setState('soon', 'Not covered by odds market', 0);
       return;
     }
 
     const pct = 100 / match.decimal_odds;
-    // Bar scales to a 50%-wide track, not 100% — exact-scoreline odds almost
-    // never clear ~20% even for the heaviest favourite, so a 100%-scale bar
-    // would leave every reading looking like a sliver.
-    const fillPct = Math.min(100, (pct / 50) * 100);
 
-    // Thresholds calibrated against real correct-score odds (checked against
-    // the Boro v Lincoln grid: top pick was ~15%, most plausible scorelines
-    // sit in the 4-12% band) rather than treated like a H/D/A market where
-    // probabilities commonly run much higher.
-    let tierClass, tierText;
-    if (pct < 1.5)      { tierClass = 'prob-long';     tierText = 'Long Shot'; }
-    else if (pct < 4)   { tierClass = 'prob-unlikely'; tierText = 'Unlikely'; }
-    else if (pct < 8)   { tierClass = 'prob-okay';     tierText = 'Okay'; }
-    else if (pct < 12)  { tierClass = 'prob-likely';   tierText = 'Likely'; }
-    else                { tierClass = 'prob-strong';   tierText = 'Strong'; }
+    // 4 tiers, thresholds calibrated against real correct-score odds (Boro v
+    // Lincoln: top pick was ~15%, next couple 6-12%, most plausible scorelines
+    // 2-6%, everything else <2%) — not a H/D/A market where probabilities
+    // commonly run much higher. "Strong" is deliberately narrow: typically
+    // only the top one or two scorelines per fixture qualify.
+    //
+    // The bar fill is a purely visual 4-step indicator (20/40/60/80%), not a
+    // literal plot of `pct` — real correct-score probabilities rarely clear
+    // ~20%, so a linear scale left the bar looking near-empty even for the
+    // favourite. No raw number is shown alongside the category — it read as
+    // confusing/redundant next to the tier label.
+    let tierKey, tierText, fillPct;
+    if (pct < 2)       { tierKey = 'long';   tierText = 'Long Shot';   fillPct = 20; }
+    else if (pct < 6)  { tierKey = 'fair';   tierText = 'Fair Chance'; fillPct = 40; }
+    else if (pct < 12) { tierKey = 'good';   tierText = 'Good Chance'; fillPct = 60; }
+    else               { tierKey = 'strong'; tierText = 'Strong';      fillPct = 80; }
 
-    const pctText = pct < 1 ? '<1%' : `${Math.round(pct * 10) / 10}%`;
-    setState(tierClass, tierText, pctText, fillPct);
+    setState(tierKey, tierText, fillPct);
   }
 
   // ── YOUR SEASON ──

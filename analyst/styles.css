@@ -372,13 +372,6 @@
   margin-bottom: 0.4rem;
 }
 
-.prob-pct-value {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 2.2rem;
-  color: var(--black);
-}
-
 .prob-chip {
   font-family: var(--font-display);
   font-size: 0.6rem;
@@ -389,12 +382,13 @@
   border-radius: 99px;
 }
 
-.prob-long     { background: #fde8ec; color: var(--red); }
-.prob-unlikely { background: #ffedd5; color: #c2410c; }
-.prob-okay     { background: #fef3c7; color: #92400e; }
-.prob-likely   { background: rgba(23,70,157,0.1); color: var(--blue); }
-.prob-strong   { background: #e6f9ed; color: #2e7d47; }
-.prob-soon     { background: var(--gray); color: #999; }
+/* Chip colours and bar-fill colours share the same 4-tier palette
+   (green/amber/orange/red) so the chip label and the bar always agree. */
+.prob-long   { background: #fde8ec; color: var(--red); }
+.prob-fair   { background: #ffedd5; color: #c2410c; }
+.prob-good   { background: #fef3c7; color: #b45309; }
+.prob-strong { background: #e6f9ed; color: #2e7d47; }
+.prob-soon   { background: var(--gray); color: #999; }
 
 .prob-track {
   background: var(--gray);
@@ -407,8 +401,14 @@
 .prob-fill {
   height: 100%;
   border-radius: 99px;
-  background: var(--gold);
+  background: var(--gray);
 }
+
+.prob-fill-long   { background: var(--red); }
+.prob-fill-fair   { background: #ea580c; }
+.prob-fill-good   { background: #d97706; }
+.prob-fill-strong { background: #2e7d47; }
+.prob-fill-soon   { background: var(--gray); }
 
 .prob-note {
   font-size: 0.7rem;
