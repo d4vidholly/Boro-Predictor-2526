@@ -393,7 +393,7 @@
 .prob-track {
   background: var(--gray);
   border-radius: 99px;
-  height: 5px;
+  height: 25px;
   overflow: hidden;
   margin-bottom: 0.6rem;
 }

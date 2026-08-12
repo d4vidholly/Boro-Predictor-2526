@@ -287,68 +287,11 @@
   }
 
   // ── FAN PROFILE ──
+  // Static placeholder until September — needs a handful of results in
+  // before Pessimist/Realist/Optimist means anything.
   async function buildProfile() {
     const el = document.getElementById('profile-content');
-    const saved = localStorage.getItem('boroScores');
-    if (!saved) {
-      el.innerHTML = '<div class="profile-empty">Save your predictions on the Predict page to unlock your fan profile.</div>';
-      return;
-    }
-    const scores = JSON.parse(saved);
-
-    const { data: results } = await sb
-      .from('results')
-      .select('fixture_index, home_goals, away_goals');
-
-    const played = results || [];
-    const playedIndexes = played.map(r => r.fixture_index);
-
-    let boroActual = 0;
-    played.forEach(r => {
-      const boroGoals = BORO_HOME[r.fixture_index] ? r.home_goals : r.away_goals;
-      const oppGoals  = BORO_HOME[r.fixture_index] ? r.away_goals : r.home_goals;
-      if (boroGoals > oppGoals)        boroActual += 3;
-      else if (boroGoals === oppGoals) boroActual += 1;
-    });
-
-    const boroPredicted = calcPts(scores, playedIndexes);
-    const diff = boroPredicted - boroActual;
-    const n    = played.length;
-
-    let icon, type, desc;
-    if (n === 0) {
-      icon = '🔬';
-      type = 'Realist';
-      desc = 'No matches played yet — check back once the season kicks off on 14 August.';
-    } else if (n < 3) {
-      icon = '🔬';
-      type = 'Gathering Data';
-      desc = `Only ${n} game${n === 1 ? '' : 's'} played so far — your fan profile unlocks after 3 games.`;
-    } else if (diff === 0) {
-      icon = '🔬';
-      type = 'Realist';
-      desc = `Your predicted points match Boro's actual tally exactly — ${boroActual} pts each.`;
-    } else if (diff >= 3) {
-      icon = '☀️';
-      type = 'Optimist';
-      desc = `You predicted ${boroPredicted} pts from the first ${n} game${n === 1 ? '' : 's'} — Boro have ${boroActual}. You backed them harder than they've performed.`;
-    } else if (diff <= -3) {
-      icon = '🌧️';
-      type = 'Pessimist';
-      desc = `You predicted ${boroPredicted} pts from the first ${n} game${n === 1 ? '' : 's'} — Boro have ${boroActual}. They're outperforming your expectations.`;
-    } else {
-      icon = '🔬';
-      type = 'Realist';
-      desc = `Boro ${boroActual} pts · You predicted ${boroPredicted} pts from ${n} game${n === 1 ? '' : 's'}. Tracking closely.`;
-    }
-
-    el.innerHTML = `
-      <div class="profile-wrap">
-        <div class="profile-icon">${icon}</div>
-        <div class="profile-type">${type}</div>
-        <p class="profile-pts">Boro <strong>${boroActual} pts</strong> &nbsp;·&nbsp; You predicted <strong>${boroPredicted} pts</strong></p>
-        <p class="profile-desc">${desc}</p>
-      </div>`;
+    el.innerHTML = '<div class="profile-empty">Fan Profile goes live in September, once enough results are in.</div>';
   }
 
   // ── NEXT FIXTURE ──
