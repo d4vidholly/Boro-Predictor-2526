@@ -70,6 +70,7 @@ All 4 score buttons per fixture now have `aria-label` in `createMatch()`.
 
 ### ✅ [MAJOR] Result tab conveys win/draw/loss by colour only
 `role="img"` added to `.result-tab`. `updateFixtureColor()` sets `aria-label="Win/Draw/Loss"`.
+**Update (12 Aug 2026):** `.result-tab` and `updateFixtureColor()` were removed entirely, replaced by a bottom-of-card points banner (`.points-banner`) that shows real text ("4 points" / "1 point" / "0 points"), which conveys the same information as literal text rather than colour alone — this fix is superseded, not undone.
 
 ### ✅ [MAJOR] Help/report modals — no focus management, no Escape
 `toggleHelpModal/toggleReportModal` move focus to `.close-button` on open.  

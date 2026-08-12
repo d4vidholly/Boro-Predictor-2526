@@ -100,7 +100,6 @@ body {
 .predictor {
   border-radius: 10px;
   padding: 1rem;
-  padding-right: 1.75rem;
   margin-bottom: 1rem;
   background: var(--off-white);
   color: var(--black);
@@ -108,20 +107,6 @@ body {
   position: relative;
   overflow: hidden;
 }
-
-/* ── RESULT TAB ───────────────────────────────────── */
-.result-tab {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 10px;
-  background: linear-gradient(to bottom, #e2e0dd, #d4d2cf);
-  transition: background 0.3s;
-}
-body.predictions-saved .predictor.win  .result-tab { background: var(--status-win); }
-body.predictions-saved .predictor.loss .result-tab { background: var(--red-dark); }
-body.predictions-saved .predictor.draw .result-tab { background: var(--gold); }
 
 .card-header {
   background: #283271;
@@ -132,8 +117,8 @@ body.predictions-saved .predictor.draw .result-tab { background: var(--gold); }
   align-items: flex-start;
   font-size: 0.78rem;
   font-weight: 500;
-  margin: -1rem -1.75rem 0.85rem -1rem;
-  padding: 0.675rem 2.625rem 0.675rem 1.5rem;
+  margin: -1rem -1rem 0.85rem -1rem;
+  padding: 0.675rem 1.5rem;
 }
 .card-header strong { font-weight: 700; }
 .card-header-left { display: flex; flex-direction: column; gap: 0.15rem; }
@@ -180,6 +165,11 @@ body.predictions-saved .predictor.draw .result-tab { background: var(--gold); }
   user-select: none;
 }
 .change-score:hover { background: rgba(0,0,0,0.12); }
+.change-score:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.change-score:disabled:hover { background: rgba(0,0,0,0.06); }
 .score {
   font-family: var(--font-display);
   font-size: 1.5rem;
@@ -187,6 +177,21 @@ body.predictions-saved .predictor.draw .result-tab { background: var(--gold); }
   width: 24px;
   text-align: center;
 }
+
+/* ── POINTS BANNER (post-deadline, once a result is in) ── */
+.points-banner {
+  margin: 0.85rem -1rem -1rem;
+  padding: 0.5rem 1rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+}
+.points-banner.pts-exact { background: var(--status-win); color: var(--white); }
+.points-banner.pts-part  { background: var(--gold);       color: var(--black); }
+.points-banner.pts-zero  { background: var(--red-dark);   color: var(--white); }
 
 /* ── ACTION BUTTONS ───────────────────────────────── */
 .button-container {

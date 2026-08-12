@@ -183,6 +183,7 @@
     if (diff <= 0) {
       ticker.classList.add('locked');
       ticker.textContent = 'Predictions are locked';
+      lockScoreButtonsIfPastDeadline();
       if (deadlineTimerId) clearInterval(deadlineTimerId);
       return;
     }
@@ -365,7 +366,6 @@
 
     return `
       <div class="predictor" id="match-${index}" data-month="${month}">
-        <div class="result-tab" role="img"></div>
         <div class="card-header">
           <div class="card-header-left">
             <span>EFL Championship</span>
@@ -401,6 +401,7 @@
             </div>
           </div>
         </div>
+        <div class="points-banner" id="points-banner-${index}" style="display:none;"></div>
       </div>
     `;
   }
@@ -485,7 +486,6 @@
       const awayEl = document.getElementById(`away-score-${i}`);
       if (homeEl) homeEl.textContent = scores[i].home;
       if (awayEl) awayEl.textContent = scores[i].away;
-      updateFixtureColor(i);
     }
   }
 
@@ -496,34 +496,47 @@
   function changeScore(index, team, delta) {
     scores[index][team] = Math.min(9, Math.max(0, scores[index][team] + delta));
     document.getElementById(`${team}-score-${index}`).textContent = scores[index][team];
-    updateFixtureColor(index);
     saveScoresToLocal();
     hasUnsavedChanges = true;
     const saveBtn = document.querySelector('.action-btn--primary');
     if (saveBtn && saveBtn.textContent === 'Saved ✓') saveBtn.textContent = 'Save';
   }
 
-  function updateFixtureColor(index) {
-    const fixture = fixtures[index];
-    const homeScore = scores[index].home;
-    const awayScore = scores[index].away;
-    const predictor = document.getElementById(`match-${index}`);
-    predictor.classList.remove('win', 'loss', 'draw');
+  // Disabled once the deadline passes — nothing entered after that point can
+  // ever be saved (blocked both here and by predictions table RLS), so the
+  // buttons shouldn't invite an action that goes nowhere.
+  function lockScoreButtonsIfPastDeadline() {
+    if (Date.now() < PREDICTIONS_DEADLINE) return;
+    document.querySelectorAll('.change-score').forEach(btn => { btn.disabled = true; });
+  }
 
-    const boroHome = fixture.home === 'Middlesbrough';
-    const boroAway = fixture.away === 'Middlesbrough';
-    if (!boroHome && !boroAway) return;
+  // Points for one prediction against one result, same 4/1/1/1 rule as the
+  // ladder VIEW and ladder/index.html's fixturePoints().
+  function fixturePoints(pred, result) {
+    if (pred.home === result.home_goals && pred.away === result.away_goals) return 4;
+    const predResult   = pred.home       > pred.away       ? 'H' : pred.home       < pred.away       ? 'A' : 'D';
+    const actualResult = result.home_goals > result.away_goals ? 'H' : result.home_goals < result.away_goals ? 'A' : 'D';
+    return (pred.home === result.home_goals ? 1 : 0)
+         + (pred.away === result.away_goals ? 1 : 0)
+         + (predResult === actualResult     ? 1 : 0);
+  }
 
-    const boroGoals = boroHome ? homeScore : awayScore;
-    const oppGoals  = boroHome ? awayScore : homeScore;
+  // Bottom-of-card points banner — only shown once the deadline has passed
+  // (before that, predictions can still change, so "points earned" isn't a
+  // real thing yet) and only for fixtures that actually have a result in.
+  function renderPointsBanners(results) {
+    if (Date.now() < PREDICTIONS_DEADLINE) return;
+    results.forEach(r => {
+      const banner = document.getElementById(`points-banner-${r.fixture_index}`);
+      const pred = scores[r.fixture_index];
+      if (!banner || !pred) return;
 
-    if (boroGoals > oppGoals) predictor.classList.add('win');
-    else if (boroGoals < oppGoals) predictor.classList.add('loss');
-    else predictor.classList.add('draw');
-
-    const tab = predictor.querySelector('.result-tab');
-    const label = boroGoals > oppGoals ? 'Win' : boroGoals < oppGoals ? 'Loss' : 'Draw';
-    tab.setAttribute('aria-label', label);
+      const pts = fixturePoints(pred, r);
+      const tierClass = pts === 4 ? 'pts-exact' : pts > 0 ? 'pts-part' : 'pts-zero';
+      banner.className = `points-banner ${tierClass}`;
+      banner.textContent = `${pts} point${pts === 1 ? '' : 's'}`;
+      banner.style.display = 'block';
+    });
   }
 
   // ---------- Clear ----------
@@ -722,8 +735,14 @@
     restoreScoreDisplay();
     setupClearButton();
     setupMonthScrollSpy();
+    lockScoreButtonsIfPastDeadline();
     const seasonMonth = getCurrentSeasonMonth();
     if (seasonMonth) scrollToMonth(seasonMonth);
+
+    if (Date.now() >= PREDICTIONS_DEADLINE) {
+      const { data: results } = await sb.from('results').select('fixture_index, home_goals, away_goals');
+      renderPointsBanners(results || []);
+    }
 
     sb.auth.onAuthStateChange((event, newSession) => {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && !currentUser) {
