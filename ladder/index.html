@@ -119,14 +119,49 @@
     // ── LADDER ───────────────────────────────────────────────
     async function showLadder() {
 
-      // Load ladder
-      const { data: ladder, error } = await sb
-        .from('ladder')
-        .select('*');
+      const [{ data: ladder }, { data: predictions }, { data: results }] = await Promise.all([
+        sb.from('ladder').select('*'),
+        sb.from('predictions').select('player_id, fixture_index, home_goals, away_goals'),
+        sb.from('results').select('fixture_index, home_goals, away_goals'),
+      ]);
+
+      const formByPlayer = buildFormByPlayer(predictions || [], results || []);
+      const rows = (ladder || []).map(row => ({ ...row, form: formByPlayer[row.player_id] || [] }));
 
       document.getElementById('loading-msg').style.display = 'none';
 
-      renderLadder(ladder || []);
+      renderLadder(rows);
+    }
+
+    // Points for one player's prediction against one fixture's result, same
+    // rule as the ladder VIEW: exact scoreline = 4, else 1 per correct home
+    // goals / away goals / result (W-D-L), capped at 3 without an exact hit.
+    function fixturePoints(pred, result) {
+      if (pred.home_goals === result.home_goals && pred.away_goals === result.away_goals) return 4;
+      const predResult   = pred.home_goals   > pred.away_goals   ? 'H' : pred.home_goals   < pred.away_goals   ? 'A' : 'D';
+      const actualResult = result.home_goals > result.away_goals ? 'H' : result.home_goals < result.away_goals ? 'A' : 'D';
+      return (pred.home_goals === result.home_goals ? 1 : 0)
+           + (pred.away_goals === result.away_goals ? 1 : 0)
+           + (predResult === actualResult            ? 1 : 0);
+    }
+
+    // Per-player array of points, most recent fixture first (index 0 is the
+    // leftmost/latest form box) — the `ladder` VIEW doesn't carry this, so
+    // it's built here from predictions + results directly.
+    function buildFormByPlayer(predictions, results) {
+      const playedNewestFirst = [...results].sort((a, b) => b.fixture_index - a.fixture_index);
+      const predsByPlayer = {};
+      predictions.forEach(p => {
+        (predsByPlayer[p.player_id] ??= {})[p.fixture_index] = p;
+      });
+
+      const form = {};
+      Object.keys(predsByPlayer).forEach(playerId => {
+        form[playerId] = playedNewestFirst
+          .filter(r => predsByPlayer[playerId][r.fixture_index])
+          .map(r => fixturePoints(predsByPlayer[playerId][r.fixture_index], r));
+      });
+      return form;
     }
 
     function renderLadder(rows) {
@@ -174,7 +209,9 @@
 
     function renderForm(form) {
       const slots = 5;
-      const entries = Array.isArray(form) ? form.slice(-slots) : [];
+      // form is already newest-first (see buildFormByPlayer) — take the
+      // first `slots` entries so index 0 (leftmost box) is the latest result.
+      const entries = Array.isArray(form) ? form.slice(0, slots) : [];
       let html = '<div class="form-boxes">';
       for (let i = 0; i < slots; i++) {
         if (i >= entries.length) {
