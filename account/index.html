@@ -187,13 +187,42 @@
   ];
 
   // ── CHALLENGE BADGES (locked until a condition is met — not selectable) ──
-  // Unlock logic isn't wired up yet (needs a results/predictions query for
-  // Off the Mark, and a per-month points query for August MOTM) — both
-  // render locked for now until that's built.
+  // `unlocked` starts false and is set for real each time the badge modal
+  // opens — see checkOffTheMark() / checkManagerOfTheMonth() below.
   const CHALLENGE_BADGES = [
     { id: 'icon-offthemark', name: 'Off the Mark',          desc: 'First Win',                     path: '../assets/badges/icons/offthemark.svg', unlocked: false },
     { id: 'icon-august',     name: 'Manager of the Month',  desc: 'August Manager of the Month',   path: '../assets/badges/icons/august.svg',      unlocked: false },
   ];
+
+  // Off the Mark unlocks automatically: the player's first exact scoreline
+  // (the 4-point hit per the scoring rules), not just a correct W/D/L.
+  async function checkOffTheMark() {
+    if (!currentUser) return false;
+    const [{ data: results }, { data: preds }] = await Promise.all([
+      sb.from('results').select('fixture_index, home_goals, away_goals'),
+      sb.from('predictions').select('fixture_index, home_goals, away_goals').eq('player_id', currentUser.id),
+    ]);
+    if (!results || !preds) return false;
+    return results.some(r => {
+      const p = preds.find(p => p.fixture_index === r.fixture_index);
+      return p && p.home_goals === r.home_goals && p.away_goals === r.away_goals;
+    });
+  }
+
+  // Manager of the Month is manually awarded, not computed — David inserts
+  // the winner's row into `monthly_awards` himself once the month is over
+  // (see ladder/schema.sql for the table + the insert template).
+  const MOTM_MONTH = '2026-08';
+
+  async function checkManagerOfTheMonth() {
+    if (!currentUser) return false;
+    const { data } = await sb
+      .from('monthly_awards')
+      .select('player_id')
+      .eq('month', MOTM_MONTH)
+      .maybeSingle();
+    return data?.player_id === currentUser.id;
+  }
 
   // ── BADGE DEFINITIONS ──
   const BADGES = [
@@ -226,25 +255,7 @@
   }
 
   // ── BADGE MODAL ──
-  function openBadgeModal() {
-    const grid = document.getElementById('badge-grid');
-    grid.innerHTML = '';
-    ICON_BADGES.forEach(badge => {
-      const isSelected = selectedBadge === badge.id;
-      const div = document.createElement('div');
-      div.className = 'badge-item earned' + (isSelected ? ' selected' : '');
-      div.innerHTML = `
-        <img src="${badge.path}" alt="${badge.name}" class="badge-icon-img">
-        <div class="badge-name">${badge.name}</div>
-      `;
-      div.addEventListener('click', () => {
-        selectedBadge = badge.id;
-        renderTeamIcon();
-        closeBadgeModal();
-      });
-      grid.appendChild(div);
-    });
-
+  function renderChallengeGrid() {
     const challengeGrid = document.getElementById('challenge-grid');
     challengeGrid.innerHTML = '';
     CHALLENGE_BADGES.forEach(badge => {
@@ -266,9 +277,38 @@
       }
       challengeGrid.appendChild(div);
     });
+  }
+
+  async function openBadgeModal() {
+    const grid = document.getElementById('badge-grid');
+    grid.innerHTML = '';
+    ICON_BADGES.forEach(badge => {
+      const isSelected = selectedBadge === badge.id;
+      const div = document.createElement('div');
+      div.className = 'badge-item earned' + (isSelected ? ' selected' : '');
+      div.innerHTML = `
+        <img src="${badge.path}" alt="${badge.name}" class="badge-icon-img">
+        <div class="badge-name">${badge.name}</div>
+      `;
+      div.addEventListener('click', () => {
+        selectedBadge = badge.id;
+        renderTeamIcon();
+        closeBadgeModal();
+      });
+      grid.appendChild(div);
+    });
+
+    renderChallengeGrid();
 
     document.getElementById('badge-modal').classList.add('open');
     document.querySelector('#badge-modal .modal-close').focus();
+
+    // Unlock state is checked fresh every time the modal opens rather than
+    // cached, so it reflects results/awards entered since the last visit.
+    const [offTheMark, motm] = await Promise.all([checkOffTheMark(), checkManagerOfTheMonth()]);
+    CHALLENGE_BADGES.find(b => b.id === 'icon-offthemark').unlocked = offTheMark;
+    CHALLENGE_BADGES.find(b => b.id === 'icon-august').unlocked = motm;
+    renderChallengeGrid();
   }
 
   function closeBadgeModal() {

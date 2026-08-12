@@ -189,15 +189,16 @@ Both fully commented out in the HTML (not just blurred) until Season Achievement
 
 ---
 
-## Account Page — Challenges (added 12 Aug 2026)
+## Account Page — Challenges (added 12 Aug 2026, unlock logic wired up same day)
 
-The badge picker modal (`account/index.html`) has a locked "Challenges" section below the regular selectable icon grid:
-- **Off the Mark** (`assets/badges/icons/offthemark.svg`) — "First Win"
-- **Manager of the Month** (`assets/badges/icons/august.svg`) — "August Manager of the Month"
+The badge picker modal (`account/index.html`) has a "Challenges" section below the regular selectable icon grid:
 
-Both render permanently greyed out (`.badge-item.locked`) — no backend logic exists yet to detect either condition. Needed before they can unlock:
-- Off the Mark: query `predictions` + `results` for the player's first correct match result (W/D/L)
-- Manager of the Month: query points-by-player for August fixtures only, surface the leader
+- **Off the Mark** (`assets/badges/icons/offthemark.svg`) — "First Win". Unlocks **automatically**: `checkOffTheMark()` compares the player's `predictions` against `results` and unlocks on the player's first **exact scoreline** (the 4-point hit per the scoring rules — not just a correct W/D/L). Checked fresh every time the badge modal opens, no caching.
+- **Manager of the Month** (`assets/badges/icons/august.svg`) — "August Manager of the Month". Unlocks **manually, by design** — no "most points in the month" query. New `monthly_awards` table (`month TEXT UNIQUE`, `player_id`) holds one row per month; David inserts the winner himself via SQL Editor once the month is over. RLS only allows authenticated SELECT — no client can write to it. `checkManagerOfTheMonth()` checks the row for `MOTM_MONTH = '2026-08'` (hardcoded — bump this constant for future months).
+
+Both checks run in `openBadgeModal()`; the modal opens instantly showing last-known state, then re-renders once the checks resolve.
+
+⬜ **`monthly_awards` needs to actually be created in Supabase** — it's documented in `ladder/schema.sql` but that file isn't auto-applied; run the `CREATE TABLE` + RLS policy manually (same pattern as the `odds` table gap from earlier today).
 
 ---
 

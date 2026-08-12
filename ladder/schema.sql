@@ -113,6 +113,18 @@ CREATE TABLE public.settings (
 -- predictions_locked: set to 'true' to lock all predictions
 INSERT INTO public.settings (key, value) VALUES ('predictions_locked', 'false');
 
+-- ── MONTHLY AWARDS (Manager of the Month — manually awarded) ──
+-- No automatic "most points in a month" query — David decides the winner
+-- and inserts the row himself once the month is over. One row per month;
+-- account/index.html's Manager of the Month challenge badge unlocks for
+-- whichever player_id is on the current month's row.
+CREATE TABLE public.monthly_awards (
+  id         SERIAL PRIMARY KEY,
+  month      TEXT NOT NULL UNIQUE,   -- 'YYYY-MM', e.g. '2026-08'
+  player_id  UUID NOT NULL REFERENCES public.players(id) ON DELETE CASCADE,
+  awarded_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 
 -- ── LADDER VIEW ───────────────────────────────────────────
 -- Scoring per fixture:
@@ -169,6 +181,7 @@ ALTER TABLE public.predictions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.results     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fixtures    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.settings    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.monthly_awards ENABLE ROW LEVEL SECURITY;
 
 -- Waitlist: anyone can insert their email (anon allowed)
 CREATE POLICY "waitlist_insert" ON public.waitlist
@@ -193,6 +206,12 @@ CREATE POLICY "results_select" ON public.results
 
 -- Settings: all authenticated users can read
 CREATE POLICY "settings_select" ON public.settings
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+-- Monthly awards: all authenticated users can read (so a player can check
+-- their own unlock status); no insert/update policy — only David, via the
+-- SQL Editor, awards a winner.
+CREATE POLICY "monthly_awards_select" ON public.monthly_awards
   FOR SELECT USING (auth.role() = 'authenticated');
 
 -- Predictions: users can read all (for ladder), only write their own,
