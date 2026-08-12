@@ -245,6 +245,8 @@ Full context on all of these (plus non-panel ideas like monthly skins, head-to-h
 - **Form boxes** — *not* in the VIEW at all; built client-side in `ladder/index.html` (`buildFormByPlayer()`), newest result leftmost, red for a missing prediction on a played fixture (not just skipped).
 - **Badge icons** — `ladder/index.html` keeps its own copy of `ICON_BADGES` (separate from `account/index.html`'s copy, no shared module — each page is self-contained per `CLAUDE.md`). Any new icon badge added to account's badge picker needs manually mirroring here too, or it'll render as an empty slot on the ladder despite saving fine in account.
 
+**Supabase Security Advisor note (13 Aug 2026):** flags `public.ladder` as `SECURITY DEFINER` (runs with the view owner's privileges, bypassing RLS on the underlying tables, rather than the querying user's own). **Decided: not worth fixing.** The ladder is meant to be a fully open leaderboard — every authenticated player already has full read access to `players`/`predictions`/`results` via their existing RLS policies (`predictions_select_all` etc.), so the view isn't exposing anything beyond what's already public within the league. The fix, if ever wanted, is one line: `ALTER VIEW public.ladder SET (security_invoker = true);` — only actually matters if `predictions`/`results` RLS is ever tightened for some other reason later, which isn't planned.
+
 ---
 
 ## Account Page — Challenges (added 12 Aug 2026, unlock logic wired up same day)
