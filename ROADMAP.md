@@ -187,6 +187,19 @@ Both fully commented out in the HTML (not just blurred) until Season Achievement
 - Surface the one with the lowest count (rarest)
 - Display: "Boro 3–1 Derby · Only 2 players called this · Your rarest call"
 
+### Potential Future Panels (ideas, not built — added 12 Aug 2026)
+
+Not committed, no build order decided. Logged here so they're considered alongside Panels 5 & 6 rather than only living in the general feature-idea lists further down.
+
+- **Predictor Profile archetypes** — a 5-type version of Panel 4 (Romantic / Realist / Doomer / Tactician / Optimist, plotted on confidence × optimism) instead of the current 3-type Pessimist/Realist/Optimist. Full spec under "Predictor Profile" below — worth deciding whether it *replaces* Fan Profile or lives alongside it before either gets built out further.
+- **Bookies vs Community overlay** — implied odds probability shown next to what the league actually predicted, highlighting where the crowd diverges from the market. Natural extension of the existing Bookies panel (Panel 3) rather than a new one — would reuse the same `odds` table.
+- **Historical H2H facts** — "Boro haven't won at Elland Road since 2012," auto-surfaced per fixture. Needs a static dataset to start, could enrich via football-data.org later.
+- **Personal accuracy breakdown** — "great at predicting home wins (78%), terrible away (22%)" — season-long stat card, updates as results come in.
+- **Season trajectory graph** — your points over time vs league average.
+- **Predicted final table** — aggregate every player's `predictions` into a consensus Boro finish position.
+
+Full context on all of these (plus non-panel ideas like monthly skins, head-to-head mode) is under "Premium Analyst Mode" below.
+
 ---
 
 ## Account Page — Challenges (added 12 Aug 2026, unlock logic wired up same day)
