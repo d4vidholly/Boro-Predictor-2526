@@ -125,7 +125,7 @@
         sb.from('results').select('fixture_index, home_goals, away_goals'),
       ]);
 
-      const formByPlayer = buildFormByPlayer(predictions || [], results || []);
+      const formByPlayer = buildFormByPlayer(predictions || [], results || [], ladder || []);
       const rows = (ladder || []).map(row => ({ ...row, form: formByPlayer[row.player_id] || [] }));
 
       document.getElementById('loading-msg').style.display = 'none';
@@ -147,8 +147,10 @@
 
     // Per-player array of points, most recent fixture first (index 0 is the
     // leftmost/latest form box) — the `ladder` VIEW doesn't carry this, so
-    // it's built here from predictions + results directly.
-    function buildFormByPlayer(predictions, results) {
+    // it's built here from predictions + results directly. Every played
+    // fixture gets an entry for every player: a missing prediction counts
+    // as 0 (red), it doesn't just disappear from their form.
+    function buildFormByPlayer(predictions, results, ladder) {
       const playedNewestFirst = [...results].sort((a, b) => b.fixture_index - a.fixture_index);
       const predsByPlayer = {};
       predictions.forEach(p => {
@@ -156,10 +158,12 @@
       });
 
       const form = {};
-      Object.keys(predsByPlayer).forEach(playerId => {
-        form[playerId] = playedNewestFirst
-          .filter(r => predsByPlayer[playerId][r.fixture_index])
-          .map(r => fixturePoints(predsByPlayer[playerId][r.fixture_index], r));
+      ladder.forEach(row => {
+        const preds = predsByPlayer[row.player_id] || {};
+        form[row.player_id] = playedNewestFirst.map(r => {
+          const pred = preds[r.fixture_index];
+          return pred ? fixturePoints(pred, r) : 0;
+        });
       });
       return form;
     }
