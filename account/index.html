@@ -116,6 +116,10 @@
       <button class="modal-close" onclick="closeBadgeModal()">✕</button>
     </div>
     <div class="badge-grid" id="badge-grid"></div>
+
+    <div class="challenges-title">Challenges</div>
+    <div class="badge-grid challenge-grid" id="challenge-grid"></div>
+
     <p class="badge-coming-soon">More badges coming soon</p>
   </div>
 </div>
@@ -182,6 +186,15 @@
     { id: 'icon-midnite',     name: 'Midnite Blue',   path: '../assets/badges/icons/midnite.svg'     },
   ];
 
+  // ── CHALLENGE BADGES (locked until a condition is met — not selectable) ──
+  // Unlock logic isn't wired up yet (needs a results/predictions query for
+  // Off the Mark, and a per-month points query for August MOTM) — both
+  // render locked for now until that's built.
+  const CHALLENGE_BADGES = [
+    { id: 'icon-offthemark', name: 'Off the Mark',          desc: 'First Win',                     path: '../assets/badges/icons/offthemark.svg', unlocked: false },
+    { id: 'icon-august',     name: 'Manager of the Month',  desc: 'August Manager of the Month',   path: '../assets/badges/icons/august.svg',      unlocked: false },
+  ];
+
   // ── BADGE DEFINITIONS ──
   const BADGES = [
     { id: 'founder',    name: 'Founder',          emoji: '⚽', color: '#7c3aed', desc: 'Signed up for Season 26/27',              rarity: 'Common',   earned: true  },
@@ -204,7 +217,7 @@
   // ── TEAM ICON ──
   function renderTeamIcon() {
     const el = document.getElementById('team-icon-display');
-    const icon = ICON_BADGES.find(b => b.id === selectedBadge);
+    const icon = ICON_BADGES.find(b => b.id === selectedBadge) || CHALLENGE_BADGES.find(b => b.id === selectedBadge);
     if (icon) {
       el.innerHTML = `<img src="${icon.path}" alt="${icon.name}" class="team-icon-img">`;
     } else {
@@ -231,6 +244,29 @@
       });
       grid.appendChild(div);
     });
+
+    const challengeGrid = document.getElementById('challenge-grid');
+    challengeGrid.innerHTML = '';
+    CHALLENGE_BADGES.forEach(badge => {
+      const div = document.createElement('div');
+      div.className = 'badge-item' + (badge.unlocked ? ' earned' : ' locked');
+      div.innerHTML = `
+        <img src="${badge.path}" alt="${badge.name}" class="badge-icon-img">
+        <div class="badge-name">${badge.name}</div>
+        <div class="badge-desc">${badge.desc}</div>
+      `;
+      if (badge.unlocked) {
+        const isSelected = selectedBadge === badge.id;
+        if (isSelected) div.classList.add('selected');
+        div.addEventListener('click', () => {
+          selectedBadge = badge.id;
+          renderTeamIcon();
+          closeBadgeModal();
+        });
+      }
+      challengeGrid.appendChild(div);
+    });
+
     document.getElementById('badge-modal').classList.add('open');
     document.querySelector('#badge-modal .modal-close').focus();
   }

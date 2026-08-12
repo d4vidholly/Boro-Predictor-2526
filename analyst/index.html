@@ -111,58 +111,50 @@
         <span class="prob-chip prob-soon" id="prob-chip">Odds coming soon</span>
       </div>
       <div class="prob-track"><div class="prob-fill" id="prob-fill" style="width:0%"></div></div>
-      <p class="prob-note">Odds converted to implied probability · Colour coded: &lt;2% long shot · 2–5% unlikely · 5–10% okay · 10–15% likely · 15%+ strong</p>
+      <p class="prob-note">Odds converted to implied probability · Colour coded: &lt;1.5% long shot · 1.5–4% unlikely · 4–8% okay · 8–12% likely · 12%+ strong</p>
     </div>
 
-    <!-- ── Everything below is still being built ── -->
-    <div class="coming-soon-wrap">
-      <div class="coming-soon-blur">
-
-        <!-- ── 4: Fan Profile ── -->
-        <div class="panel panel-wide">
-          <div class="panel-title">Fan Profile</div>
-          <p class="panel-desc">Your outlook vs Boro's actual points from completed games.</p>
-          <div id="profile-content">
-            <div class="profile-empty">Save your predictions on the Predict page to unlock your fan profile.</div>
-          </div>
-        </div>
-
-        <!-- Season Overview panels hidden entirely for now (not just blurred) —
-             restore when Season Achievement is ready to build.
-        <div class="grid-section-label">Season Overview</div>
-
-        <div class="panel panel-wide">
-          <div class="panel-title">Season Achievement</div>
-          <p class="panel-desc">Your rarest correct call — the score you got that fewest others predicted.</p>
-
-          <div class="ach-wrap">
-            <div class="ach-left">
-              <div class="ach-icon">🏅</div>
-              <div class="ach-locked-title">First Results Needed</div>
-              <div class="ach-locked-desc">Your rarest correct prediction unlocks once Boro's first results are in.</div>
-            </div>
-            <div class="ach-preview">
-              <div class="ach-preview-label">Example</div>
-              <div class="ach-preview-score">Boro 2–0 Swansea</div>
-              <div class="ach-preview-rarity">Only 2 players predicted this · Your rarest call</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="panel panel-wide">
-          <div class="panel-title">Your Season</div>
-          <p class="panel-desc">How your 46-game prediction stacks up across the championship.</p>
-          <div id="season-summary-content">
-            <div class="ss-empty">Save your predictions on the Predict page to see your season summary.</div>
-          </div>
-        </div>
-        -->
-
-      </div>
-      <div class="coming-soon-overlay">
-        <span>More features coming soon</span>
+    <!-- ── 4: Fan Profile ── -->
+    <div class="panel panel-wide">
+      <div class="panel-title">Fan Profile</div>
+      <p class="panel-desc">Your outlook vs Boro's actual points from completed games.</p>
+      <div id="profile-content">
+        <div class="profile-empty">Save your predictions on the Predict page to unlock your fan profile.</div>
       </div>
     </div>
+
+    <div class="more-soon">More coming soon</div>
+
+    <!-- Season Overview panels hidden entirely for now (not just blurred) —
+         restore when Season Achievement is ready to build.
+    <div class="grid-section-label">Season Overview</div>
+
+    <div class="panel panel-wide">
+      <div class="panel-title">Season Achievement</div>
+      <p class="panel-desc">Your rarest correct call — the score you got that fewest others predicted.</p>
+
+      <div class="ach-wrap">
+        <div class="ach-left">
+          <div class="ach-icon">🏅</div>
+          <div class="ach-locked-title">First Results Needed</div>
+          <div class="ach-locked-desc">Your rarest correct prediction unlocks once Boro's first results are in.</div>
+        </div>
+        <div class="ach-preview">
+          <div class="ach-preview-label">Example</div>
+          <div class="ach-preview-score">Boro 2–0 Swansea</div>
+          <div class="ach-preview-rarity">Only 2 players predicted this · Your rarest call</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel panel-wide">
+      <div class="panel-title">Your Season</div>
+      <p class="panel-desc">How your 46-game prediction stacks up across the championship.</p>
+      <div id="season-summary-content">
+        <div class="ss-empty">Save your predictions on the Predict page to see your season summary.</div>
+      </div>
+    </div>
+    -->
 
   </div>
 </div>
@@ -325,12 +317,18 @@
     const n    = played.length;
 
     let icon, type, desc;
-    if (n === 0 || diff === 0) {
+    if (n === 0) {
       icon = '🔬';
       type = 'Realist';
-      desc = n === 0
-        ? 'No matches played yet — check back once the season kicks off on 14 August.'
-        : `Your predicted points match Boro's actual tally exactly — ${boroActual} pts each.`;
+      desc = 'No matches played yet — check back once the season kicks off on 14 August.';
+    } else if (n < 3) {
+      icon = '🔬';
+      type = 'Gathering Data';
+      desc = `Only ${n} game${n === 1 ? '' : 's'} played so far — your fan profile unlocks after 3 games.`;
+    } else if (diff === 0) {
+      icon = '🔬';
+      type = 'Realist';
+      desc = `Your predicted points match Boro's actual tally exactly — ${boroActual} pts each.`;
     } else if (diff >= 3) {
       icon = '☀️';
       type = 'Optimist';
@@ -553,13 +551,20 @@
     }
 
     const pct = 100 / match.decimal_odds;
-    const fillPct = Math.min(100, pct);
+    // Bar scales to a 50%-wide track, not 100% — exact-scoreline odds almost
+    // never clear ~20% even for the heaviest favourite, so a 100%-scale bar
+    // would leave every reading looking like a sliver.
+    const fillPct = Math.min(100, (pct / 50) * 100);
 
+    // Thresholds calibrated against real correct-score odds (checked against
+    // the Boro v Lincoln grid: top pick was ~15%, most plausible scorelines
+    // sit in the 4-12% band) rather than treated like a H/D/A market where
+    // probabilities commonly run much higher.
     let tierClass, tierText;
-    if (pct < 2)        { tierClass = 'prob-long';     tierText = 'Long Shot'; }
-    else if (pct < 5)   { tierClass = 'prob-unlikely'; tierText = 'Unlikely'; }
-    else if (pct < 10)  { tierClass = 'prob-okay';     tierText = 'Okay'; }
-    else if (pct < 15)  { tierClass = 'prob-likely';   tierText = 'Likely'; }
+    if (pct < 1.5)      { tierClass = 'prob-long';     tierText = 'Long Shot'; }
+    else if (pct < 4)   { tierClass = 'prob-unlikely'; tierText = 'Unlikely'; }
+    else if (pct < 8)   { tierClass = 'prob-okay';     tierText = 'Okay'; }
+    else if (pct < 12)  { tierClass = 'prob-likely';   tierText = 'Likely'; }
     else                { tierClass = 'prob-strong';   tierText = 'Strong'; }
 
     const pctText = pct < 1 ? '<1%' : `${Math.round(pct * 10) / 10}%`;
