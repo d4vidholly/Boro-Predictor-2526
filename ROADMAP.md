@@ -36,6 +36,29 @@
 
 `admin/index.html` + `admin/styles.css` exist locally (untracked, not committed) but the manual Supabase + self-serve login-link workflow above replaced the need for it. Leaving it as-is, uncommitted, unless the manual process stops scaling — no need to harden its passphrase or commit it for now.
 
+## Recent UI Changes (12 August 2026)
+
+**Bookies panel**
+- The `odds` table didn't actually exist in Supabase, despite the 7 Aug entry below claiming it had been created and tested — confirmed via a real `42P01: relation "public.odds" does not exist` error when trying to seed it. Created it properly per `analyst/SPEC.md`'s schema (table + RLS + unique constraint on `fixture_index, home_goals, away_goals`); that earlier claim was inaccurate.
+- Seeded fixture 0 (Middlesbrough v Lincoln, 15 Aug) manually from Oddschecker's correct-score grid — 38 rows, `bookmaker = 'oddschecker_manual'` — as a stopgap since The Odds API still doesn't cover `correct_score` for this match. Keyed on the same unique constraint `sync-odds` upserts on, so a future successful automated fetch overwrites these rows on its own, no cleanup needed.
+- Found and fixed a real bug: the bar fill (`.prob-fill`) was hardcoded to gold and never actually picked up a tier colour — only the chip text changed, which is why "Strong" still rendered as a yellow bar. Bar and chip now share one `tierKey`.
+- Redesigned from 5 probability tiers to 4 — **Long Shot (red, <2%) / Fair Chance (orange, 2–6%) / Good Chance (amber, 6–12%) / Strong (green, 12%+)**, thresholds checked against the real Boro v Lincoln odds data so "Strong" stays narrow (typically only the top 1–2 scorelines per fixture).
+- Bar fill is now a purely visual 20/40/60/80% step per tier, not a linear plot of the real probability — the raw % number is no longer shown, just the tier label (was confusing next to a category name).
+- Bar thickness (and Most Common Score's bar) changed from 5px to 25px, matching the Community Split donut ring's thickness.
+- Panel moved out from behind the blur into panel 3 (was panel 4, blurred).
+
+**Fan Profile**
+- Moved to panel 4. A `panel-wide` class left over from an earlier reshuffle (when it was alone in the old blurred sub-grid) was pushing it onto its own full-width row instead of sitting beside Bookies — removed, now sits correctly in column 2 on desktop.
+- Simplified to a static "Fan Profile goes live in September, once enough results are in" placeholder — the Pessimist/Realist/Optimist computation isn't meaningful yet with only a game or two played, so it's not shown.
+
+**Account page**
+- Added a locked "Challenges" section to the badge picker modal — Off the Mark ("First Win") and Manager of the Month ("August Manager of the Month"), using new icon assets (`assets/badges/icons/offthemark.svg`, `august.svg`), styled with the `.badge-item.locked` state (already existed in CSS, was never wired up until now).
+- ⬜ Neither challenge badge has real unlock logic yet — both permanently show locked until a "first correct result" query and an "August points leader" query are built.
+
+**Analyst page structure**
+- Removed the now-empty `coming-soon-wrap`/`coming-soon-blur`/`coming-soon-overlay` scaffolding (Fan Profile was the only live content left inside it) — replaced with a static "More coming soon" banner below the 4 live panels.
+- The full-page gate modal remains disabled, unchanged from 7 Aug — still needs restoring before the page is promoted more heavily.
+
 ## Recent UI Changes (7 August 2026)
 
 **Security**
@@ -115,11 +138,11 @@ Users who sign up on the landing page but never enter the competition sit only i
 
 ---
 
-## Analyst Page — Current Build (updated 7 Aug 2026)
+## Analyst Page — Current Build (updated 12 Aug 2026)
 
-Six panels on `analyst/index.html`. Only the first two are finished and visible; everything else is blurred or hidden behind a "More features coming soon" overlay so the page can be shown without looking half-built.
+Four of six panels on `analyst/index.html` are finished and visible. Panels 5 & 6 are fully hidden until built. No blur/overlay scaffolding remains — replaced with a static "More coming soon" banner below the live panels.
 
-- The full-page "Coming Soon" gate modal is currently disabled (commented out in the HTML, `<!-- ANALYST GATE MODAL (temporarily disabled for review...) -->`) so it could be worked on locally. A lighter gold "In development" banner is shown instead. **Decided (7 Aug 2026): fine to leave the page open like this for now** — revisit restoring the full gate closer to when the page is finished or being promoted more heavily.
+- The full-page "Coming Soon" gate modal is currently disabled (commented out in the HTML, `<!-- ANALYST GATE MODAL (temporarily disabled for review...) -->`) so it could be worked on locally. A lighter gold "In development" banner is shown instead. Still fine to leave the page open like this for now — revisit restoring the full gate closer to when the page is finished or being promoted more heavily.
 
 ### Panel 1 — Community Split ✅ Live
 **What:** Donut chart showing how the community split their prediction (home win / draw / away win) for the next unplayed fixture.
@@ -130,28 +153,29 @@ Six panels on `analyst/index.html`. Only the first two are finished and visible;
 - Donut segments + dots use a per-team `TEAM_COLORS` map: Boro is always app-red, other traditionally-red clubs (Bristol City, Charlton, Sheffield United, Southampton, Stoke, Wrexham) got substitute colours so they don't clash with Boro; Lincoln City is black
 - "You predicted: [winner/Draw]" reminder at the bottom, reading the player's own saved localStorage prediction
 - Handles zero-predictions and season-complete states
+- Donut ring is 25px thick (110px outer, 60px inner hole) — Bookies and Most Common Score bars were both matched to this thickness
 
 ### Panel 2 — Most Common Score ✅ Live
 **What:** The exact scoreline most players predicted for the next fixture, and what % called it.
 
 - Bar fill colours to whichever side the scoreline favours (home/away team colour, or a darker grey `#767B85` for a draw — distinct from the pale bar-track grey)
 - "You predicted: [score]" reminder at the bottom
+- Bar is 25px thick, matching the Community Split donut ring
 
-### Panel 3 — Fan Profile ✅ Live (blurred)
-**What:** Classifies the player as Pessimist / Realist / Optimist based on their own predicted Boro season points total vs actual results so far.
+### Panel 3 — Bookies Probability ✅ Live
+**What:** Category of the player's own predicted scoreline based on betting market odds — no raw % is shown, just a tier: **Long Shot (red, <2%) · Fair Chance (orange, 2–6%) · Good Chance (amber, 6–12%) · Strong (green, 12%+)**. "Strong" is deliberately narrow — typically only the top 1–2 scorelines per fixture qualify, since exact-scoreline odds rarely clear ~20% even for the heaviest favourite.
 
-**Thresholds:** 🌧️ Pessimist <50 pts · 🔬 Realist 50–74 pts · ☀️ Optimist 75+ pts
-
-Currently sits behind the blur overlay along with Bookies — functionally complete, just not part of the public-facing set yet.
-
-### Panel 4 — Bookies Probability — built, blocked on external data (blurred)
-**What:** Implied probability of the player's own predicted scoreline based on betting market odds. Colour coded: <5% Long Shot · 5–10% Possible · 10–15% Decent · 15%+ Strong.
-
-- `odds` table + RLS created in Supabase (SELECT-only for authenticated users)
+- `odds` table + RLS actually created in Supabase 12 Aug 2026 (earlier note below in the 7 Aug history that it already existed was wrong — confirmed by a real `42P01` error when trying to use it)
 - `supabase/functions/sync-odds/index.ts` — finds the next fixture, matches it on The Odds API, pulls `correct_score` odds for a single fixed UK bookmaker (bet365, falls back to first available), upserts into `odds`
-- Deployed and manually invoked successfully — key valid, event matching works, frontend reads from `odds` and applies the colour tiers correctly
-- ⬜ **Daily cron not yet scheduled** — creating it in Dashboard → Integrations/Cron failed with `42P01: relation cron.job does not exist` because the `pg_cron` extension isn't enabled. Fix: Database → Extensions → enable `pg_cron`, then recreate the cron job (Type: Supabase Edge Function → `sync-odds`, schedule `0 8 * * *`, Authorization header with the anon key, timeout 5000ms — cron job fields already filled in once, just needs pg_cron enabled first)
-- ⬜ The `correct_score` market isn't yet covered by The Odds API for the next fixture (Middlesbrough v Lincoln, 15 Aug) even though it's live on Oddschecker — likely an ingestion lag on The Odds API's side, not a bug. Re-check closer to kickoff once the cron is running.
+- Fixture 0 (Middlesbrough v Lincoln, 15 Aug) seeded manually from Oddschecker's correct-score grid as a stopgap (`bookmaker = 'oddschecker_manual'`) — will be overwritten automatically the moment `sync-odds` successfully pulls real data, since both write to the same `(fixture_index, home_goals, away_goals)` unique key
+- Bar fill is a purely visual 20/40/60/80% step per tier (not a literal probability plot), 25px thick to match the Community Split donut ring
+- ⬜ **Daily cron not yet scheduled** — creating it in Dashboard → Integrations/Cron failed with `42P01: relation cron.job does not exist` because the `pg_cron` extension isn't enabled. Fix: Database → Extensions → enable `pg_cron`, then recreate the cron job (Type: Supabase Edge Function → `sync-odds`, schedule `0 8 * * *`, Authorization header with the anon key, timeout 5000ms — cron job fields already filled in once, just needs pg_cron enabled first). **Deliberately deferred** — decided to keep manually re-invoking `sync-odds` in the meantime to learn the real lag before scheduling has real fixture 15/8/26 data to test against.
+- ⬜ The `correct_score` market still isn't covered by The Odds API for fixture 0 as of 12 Aug (confirmed via manual `sync-odds` invoke), even though it's live on Oddschecker — likely an ingestion lag on The Odds API's side, not a bug. Re-check closer to kickoff.
+
+### Panel 4 — Fan Profile — placeholder
+**What:** Will classify the player as Pessimist / Realist / Optimist based on their own predicted Boro season points total vs actual results, once there's enough data to mean anything.
+
+- Currently shows a static "Fan Profile goes live in September, once enough results are in" message — not wired up to real computation in the UI yet; not meaningful with only a game or two played.
 
 ### Panels 5 & 6 — Season Achievement / Your Season — hidden entirely
 Both fully commented out in the HTML (not just blurred) until Season Achievement is ready to build. "Your Season" was previously live (season points/outlook summary from localStorage) but is switched off along with Season Achievement for now — re-enable both together.
@@ -162,6 +186,18 @@ Both fully commented out in the HTML (not just blurred) until Season Achievement
 - For each correct prediction, count how many other players predicted the same scoreline
 - Surface the one with the lowest count (rarest)
 - Display: "Boro 3–1 Derby · Only 2 players called this · Your rarest call"
+
+---
+
+## Account Page — Challenges (added 12 Aug 2026)
+
+The badge picker modal (`account/index.html`) has a locked "Challenges" section below the regular selectable icon grid:
+- **Off the Mark** (`assets/badges/icons/offthemark.svg`) — "First Win"
+- **Manager of the Month** (`assets/badges/icons/august.svg`) — "August Manager of the Month"
+
+Both render permanently greyed out (`.badge-item.locked`) — no backend logic exists yet to detect either condition. Needed before they can unlock:
+- Off the Mark: query `predictions` + `results` for the player's first correct match result (W/D/L)
+- Manager of the Month: query points-by-player for August fixtures only, surface the leader
 
 ---
 
