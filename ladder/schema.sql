@@ -171,7 +171,7 @@ FROM public.players p
 LEFT JOIN public.predictions pred ON pred.player_id = p.id
 LEFT JOIN public.results r        ON r.fixture_index = pred.fixture_index
 GROUP BY p.id, p.name, p.team_name
-ORDER BY points DESC NULLS LAST, correct_scores DESC NULLS LAST, correct_results DESC NULLS LAST;
+ORDER BY points DESC NULLS LAST, correct_scores DESC NULLS LAST, correct_results DESC NULLS LAST, p.name ASC;
 
 
 -- ── ROW LEVEL SECURITY ────────────────────────────────────
