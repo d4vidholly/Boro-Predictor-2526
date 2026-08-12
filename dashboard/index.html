@@ -67,17 +67,6 @@
       <p class="match-stadium" id="match-stadium"></p>
     </div>
 
-    <div class="prev-panels" style="display:none">
-      <div class="prev-panel">
-        <div class="prev-panel-label">Previous Result</div>
-        <div class="prev-panel-value" id="prev-result">—</div>
-      </div>
-      <div class="prev-panel">
-        <div class="prev-panel-label">Previous Score</div>
-        <div class="prev-panel-value" id="prev-score">—</div>
-      </div>
-    </div>
-
     <p class="section-label" style="margin-top:1.75rem">Your Prediction</p>
 
     <div class="prediction-card">
@@ -87,6 +76,15 @@
       <div class="pred-upgrade">
         <p class="pred-upgrade-text">See what everyone else is predicting</p>
         <a href="../analyst/" class="btn-upgrade">Analyst Mode</a>
+      </div>
+    </div>
+
+    <div class="last-match-section" id="last-match-section" style="display:none">
+      <p class="section-label" style="margin-top:1.75rem">Last Match</p>
+      <div class="prediction-card">
+        <div id="last-match-card">
+          <!-- Filled by JS -->
+        </div>
       </div>
     </div>
 
@@ -307,7 +305,18 @@
     document.getElementById('match-section').style.display = 'block';
   }
 
-  // ── PREVIOUS RESULT ───────────────────────────────────
+  // ── LAST MATCH ─────────────────────────────────────────
+  // Points for one prediction against one result, same 4/1/1/1 rule used
+  // on the ladder and predict pages.
+  function fixturePoints(pred, result) {
+    if (pred.home === result.home_goals && pred.away === result.away_goals) return 4;
+    const predResult   = pred.home       > pred.away       ? 'H' : pred.home       < pred.away       ? 'A' : 'D';
+    const actualResult = result.home_goals > result.away_goals ? 'H' : result.home_goals < result.away_goals ? 'A' : 'D';
+    return (pred.home === result.home_goals ? 1 : 0)
+         + (pred.away === result.away_goals ? 1 : 0)
+         + (predResult === actualResult     ? 1 : 0);
+  }
+
   async function loadPreviousResult() {
     const { data, error } = await sb
       .from('results')
@@ -321,16 +330,30 @@
     const fixture = fixtures[result.fixture_index];
     if (!fixture) return;
 
-    const boroHome  = fixture.home === 'Middlesbrough';
-    const boroGoals = boroHome ? result.home_goals : result.away_goals;
-    const oppGoals  = boroHome ? result.away_goals : result.home_goals;
-    const outcome   = boroGoals > oppGoals ? 'win' : boroGoals < oppGoals ? 'loss' : 'draw';
-    const label     = outcome === 'win' ? 'Win' : outcome === 'loss' ? 'Loss' : 'Draw';
+    const card = document.getElementById('last-match-card');
 
-    document.getElementById('prev-result').textContent = label;
-    document.getElementById('prev-result').className   = `prev-panel-value ${outcome}`;
-    document.getElementById('prev-score').textContent  = `${result.home_goals} – ${result.away_goals}`;
-    document.querySelector('.prev-panels').style.display = '';
+    const saved  = localStorage.getItem('boroScores');
+    const scores = saved ? JSON.parse(saved) : null;
+    const pred   = scores ? scores[result.fixture_index] : null;
+
+    let pointsHtml = '';
+    if (pred) {
+      const pts = fixturePoints(pred, result);
+      const tierClass = pts === 4 ? 'pts-exact' : pts > 0 ? 'pts-part' : 'pts-zero';
+      pointsHtml = `<div class="last-match-points ${tierClass}">${pts} point${pts === 1 ? '' : 's'}</div>`;
+    }
+
+    card.innerHTML = `
+      <div class="prediction-inner">
+        <img class="pred-badge" src="${badgePath(fixture.home)}" alt="${fixture.home}">
+        <div class="pred-score">${result.home_goals}</div>
+        <div class="pred-divider">–</div>
+        <div class="pred-score">${result.away_goals}</div>
+        <img class="pred-badge" src="${badgePath(fixture.away)}" alt="${fixture.away}">
+      </div>
+      ${pointsHtml}`;
+
+    document.getElementById('last-match-section').style.display = '';
   }
 
   // ── RENDER MATCH ──────────────────────────────────────

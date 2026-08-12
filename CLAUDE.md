@@ -89,9 +89,10 @@ If fixtures are reordered, these indices must be updated manually.
 |---|---|
 | `renderFixtures()` | Builds full fixture list DOM from `fixtures` + `scores` |
 | `filterMonth(month)` | Shows/hides `.predictor` and `.month-divider` elements by `data-month` |
-| `changeScore(index, team, delta)` | Mutates `scores`, clamps 0–9, saves to localStorage |
-| `lockScoreButtonsIfPastDeadline()` | Disables all `.change-score` buttons once `PREDICTIONS_DEADLINE` has passed — nothing entered after that can be saved anyway |
-| `renderPointsBanners(results)` | Post-deadline only: shows a bottom-of-card banner per fixture with a result — green (4pt exact), gold (1–3pt partial), dark red (0pt) |
+| `changeScore(index, team, delta)` | Mutates `scores`, clamps 0–9, updates colour, saves to localStorage |
+| `updateFixtureColor(index)` | Applies `.win` / `.loss` / `.draw` class (drives the side `.result-tab`) based on Boro's predicted result — live until the deadline, then hidden |
+| `lockScoreButtonsIfPastDeadline()` | Once `PREDICTIONS_DEADLINE` has passed: disables all `.change-score` buttons and adds `body.predictions-locked`, which hides `.result-tab` via CSS |
+| `renderPointsBanners(results)` | Post-deadline only: shows a bottom-of-card banner per fixture with a result — green (4pt exact), gold (1–3pt partial), dark red (0pt); takes over from the now-hidden result tab |
 | `calculatePoints()` | Tallies wins/draws/losses/GD, maps total points to one of 6 narrative tiers, opens report modal |
 | `savePredictions()` | Upserts all predictions to Supabase `predictions` table |
 | `submitPredictions()` | Exports predictions to `.xlsx` via XLSX CDN library |

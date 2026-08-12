@@ -264,35 +264,20 @@
   font-size: 0.95rem;
 }
 
-/* ── PREVIOUS PANELS ─────────────────────────────── */
-.prev-panels {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.prev-panel {
-  background: var(--red-dark);
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  text-align: center;
-}
-
-.prev-panel-label {
+/* ── LAST MATCH POINTS ────────────────────────────── */
+.last-match-points {
+  margin: 1.25rem -1.75rem -1.75rem;
+  padding: 0.6rem 1.75rem;
   font-family: var(--font-display);
-  font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(255,255,255,0.5);
-  margin-bottom: 0.4rem;
+  text-align: center;
+  border-radius: 0 0 14px 14px;
 }
-
-.prev-panel-value {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 1.4rem;
-  color: var(--white);
-  line-height: 1;
-}
+/* pts-zero uses --black, not --red-dark — the card itself is already
+   --red-dark, so a same-colour banner would be invisible against it. */
+.last-match-points.pts-exact { background: var(--status-win); color: var(--white); }
+.last-match-points.pts-part  { background: var(--gold);       color: var(--black); }
+.last-match-points.pts-zero  { background: var(--black);      color: var(--white); }

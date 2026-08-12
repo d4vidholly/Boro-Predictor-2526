@@ -100,6 +100,7 @@ body {
 .predictor {
   border-radius: 10px;
   padding: 1rem;
+  padding-right: 1.75rem;
   margin-bottom: 1rem;
   background: var(--off-white);
   color: var(--black);
@@ -107,6 +108,23 @@ body {
   position: relative;
   overflow: hidden;
 }
+
+/* ── RESULT TAB ───────────────────────────────────── */
+/* Predicted result, live until the deadline — hidden by body.predictions-
+   locked once it passes, replaced by the points banner (actual result). */
+.result-tab {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  background: linear-gradient(to bottom, #e2e0dd, #d4d2cf);
+  transition: background 0.3s;
+}
+body.predictions-saved .predictor.win  .result-tab { background: var(--status-win); }
+body.predictions-saved .predictor.loss .result-tab { background: var(--red-dark); }
+body.predictions-saved .predictor.draw .result-tab { background: var(--gold); }
+body.predictions-locked .result-tab { display: none; }
 
 .card-header {
   background: #283271;
@@ -117,8 +135,8 @@ body {
   align-items: flex-start;
   font-size: 0.78rem;
   font-weight: 500;
-  margin: -1rem -1rem 0.85rem -1rem;
-  padding: 0.675rem 1.5rem;
+  margin: -1rem -1.75rem 0.85rem -1rem;
+  padding: 0.675rem 2.625rem 0.675rem 1.5rem;
 }
 .card-header strong { font-weight: 700; }
 .card-header-left { display: flex; flex-direction: column; gap: 0.15rem; }
