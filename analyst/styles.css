@@ -418,11 +418,12 @@
   border-radius: 99px;
 }
 
-.prob-long   { background: #fde8ec; color: var(--red); }
-.prob-poss   { background: #fef3c7; color: #92400e; }
-.prob-decent { background: rgba(23,70,157,0.1); color: var(--blue); }
-.prob-strong { background: #e6f9ed; color: #2e7d47; }
-.prob-soon   { background: var(--gray); color: #999; }
+.prob-long     { background: #fde8ec; color: var(--red); }
+.prob-unlikely { background: #ffedd5; color: #c2410c; }
+.prob-okay     { background: #fef3c7; color: #92400e; }
+.prob-likely   { background: rgba(23,70,157,0.1); color: var(--blue); }
+.prob-strong   { background: #e6f9ed; color: #2e7d47; }
+.prob-soon     { background: var(--gray); color: #999; }
 
 .prob-track {
   background: var(--gray);

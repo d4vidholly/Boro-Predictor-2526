@@ -96,35 +96,35 @@
       <p class="mcs-your-pick" id="mcs-your-pick"></p>
     </div>
 
+    <!-- ── 3: Bookies Probability ── -->
+    <div class="panel">
+      <div class="panel-title">Bookies</div>
+      <p class="panel-desc">Probability of your predicted scoreline based on betting market odds.</p>
+
+      <div class="prob-match">
+        <div class="prob-match-label" id="prob-match-label">Your call</div>
+        <div class="prob-scoreline" id="prob-scoreline">—</div>
+      </div>
+
+      <div class="prob-pct-row">
+        <span class="prob-pct-value" id="prob-pct-value">—</span>
+        <span class="prob-chip prob-soon" id="prob-chip">Odds coming soon</span>
+      </div>
+      <div class="prob-track"><div class="prob-fill" id="prob-fill" style="width:0%"></div></div>
+      <p class="prob-note">Odds converted to implied probability · Colour coded: &lt;2% long shot · 2–5% unlikely · 5–10% okay · 10–15% likely · 15%+ strong</p>
+    </div>
+
     <!-- ── Everything below is still being built ── -->
     <div class="coming-soon-wrap">
       <div class="coming-soon-blur">
 
-        <!-- ── 3: Fan Profile ── -->
-        <div class="panel">
+        <!-- ── 4: Fan Profile ── -->
+        <div class="panel panel-wide">
           <div class="panel-title">Fan Profile</div>
           <p class="panel-desc">Your outlook vs Boro's actual points from completed games.</p>
           <div id="profile-content">
             <div class="profile-empty">Save your predictions on the Predict page to unlock your fan profile.</div>
           </div>
-        </div>
-
-        <!-- ── 4: Bookies Probability ── -->
-        <div class="panel">
-          <div class="panel-title">Bookies</div>
-          <p class="panel-desc">Probability of your predicted scoreline based on betting market odds.</p>
-
-          <div class="prob-match">
-            <div class="prob-match-label" id="prob-match-label">Your call</div>
-            <div class="prob-scoreline" id="prob-scoreline">—</div>
-          </div>
-
-          <div class="prob-pct-row">
-            <span class="prob-pct-value" id="prob-pct-value">—</span>
-            <span class="prob-chip prob-soon" id="prob-chip">Odds coming soon</span>
-          </div>
-          <div class="prob-track"><div class="prob-fill" id="prob-fill" style="width:0%"></div></div>
-          <p class="prob-note">Odds converted to implied probability · Colour coded: &lt;5% long shot · 5–10% possible · 10–15% decent · 15%+ strong</p>
         </div>
 
         <!-- Season Overview panels hidden entirely for now (not just blurred) —
@@ -556,12 +556,14 @@
     const fillPct = Math.min(100, pct);
 
     let tierClass, tierText;
-    if (pct < 5)       { tierClass = 'prob-long';   tierText = 'Long Shot'; }
-    else if (pct < 10)  { tierClass = 'prob-poss';   tierText = 'Possible'; }
-    else if (pct < 15)  { tierClass = 'prob-decent'; tierText = 'Decent'; }
-    else                { tierClass = 'prob-strong'; tierText = 'Strong'; }
+    if (pct < 2)        { tierClass = 'prob-long';     tierText = 'Long Shot'; }
+    else if (pct < 5)   { tierClass = 'prob-unlikely'; tierText = 'Unlikely'; }
+    else if (pct < 10)  { tierClass = 'prob-okay';     tierText = 'Okay'; }
+    else if (pct < 15)  { tierClass = 'prob-likely';   tierText = 'Likely'; }
+    else                { tierClass = 'prob-strong';   tierText = 'Strong'; }
 
-    setState(tierClass, tierText, `${Math.round(pct * 10) / 10}%`, fillPct);
+    const pctText = pct < 1 ? '<1%' : `${Math.round(pct * 10) / 10}%`;
+    setState(tierClass, tierText, pctText, fillPct);
   }
 
   // ── YOUR SEASON ──
