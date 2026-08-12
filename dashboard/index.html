@@ -271,10 +271,30 @@
     document.getElementById('page').style.display    = 'block';
   }
 
+  // ── NEXT FIXTURE ──
+  // Lowest fixture_index with no row in `results` yet — i.e. "next match"
+  // means next *unplayed* match, not just next by calendar date (which
+  // would silently go stale if a match is postponed or rescheduled).
+  // Same approach as analyst/index.html's getNextFixture().
+  async function getNextFixtureIndex() {
+    const { data: results } = await sb.from('results').select('fixture_index');
+    const played = new Set((results || []).map(r => r.fixture_index));
+    for (let i = 0; i < fixtures.length; i++) {
+      if (!played.has(i)) return i;
+    }
+    return null; // every fixture has a result — season complete
+  }
+
   // ── LOAD DASHBOARD ────────────────────────────────────
   async function loadDashboard() {
-    const fixtureIndex = 0;
-    const upcoming     = fixtures[fixtureIndex];
+    const fixtureIndex = await getNextFixtureIndex();
+
+    if (fixtureIndex === null) {
+      document.getElementById('all-done').style.display = 'block';
+      return;
+    }
+
+    const upcoming = fixtures[fixtureIndex];
 
     const saved  = localStorage.getItem('boroScores');
     const scores = saved ? JSON.parse(saved) : null;

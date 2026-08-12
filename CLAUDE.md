@@ -129,7 +129,7 @@ Allows authenticated players to:
 
 ## dashboard/index.html
 
-Shows the next upcoming fixture (first `fixtures` row with a `match_date` in the future) and the player's saved prediction for that match. Uses the same `badges` map as the predictor page.
+Shows the next unplayed fixture — `getNextFixtureIndex()` finds the lowest `fixture_index` with no row in Supabase `results` yet (fixed 12 Aug 2026; was previously hardcoded to fixture 0 regardless of results, same approach as `analyst/index.html`'s `getNextFixture()`) — and the player's saved prediction for that match, read from `localStorage`. Uses the same `badges` map as the predictor page. Falls back to an "All Done" / Season Complete state once every fixture has a result.
 
 ## Assets
 
