@@ -186,43 +186,51 @@
     { id: 'icon-midnite',     name: 'Midnite Blue',   path: '../assets/badges/icons/midnite.svg'     },
   ];
 
-  // ── CHALLENGE BADGES (locked until a condition is met — not selectable) ──
-  // `unlocked` starts false and is set for real each time the badge modal
-  // opens — see checkOffTheMark() / checkManagerOfTheMonth() below.
-  const CHALLENGE_BADGES = [
-    { id: 'icon-offthemark', name: 'Off the Mark',          desc: 'First Win',                     path: '../assets/badges/icons/offthemark.svg', unlocked: false },
-    { id: 'icon-august',     name: 'Manager of the Month',  desc: 'August Manager of the Month',   path: '../assets/badges/icons/august.svg',      unlocked: false },
-  ];
-
   // Off the Mark unlocks automatically: the player's first exact scoreline
-  // (the 4-point hit per the scoring rules), not just a correct W/D/L.
+  // (the 4-point hit per the scoring rules, not just a correct W/D/L). The
+  // `ladder` view (ladder/schema.sql) already computes this per player as
+  // `correct_scores` — reuse it instead of re-deriving from predictions +
+  // results client-side.
   async function checkOffTheMark() {
     if (!currentUser) return false;
-    const [{ data: results }, { data: preds }] = await Promise.all([
-      sb.from('results').select('fixture_index, home_goals, away_goals'),
-      sb.from('predictions').select('fixture_index, home_goals, away_goals').eq('player_id', currentUser.id),
-    ]);
-    if (!results || !preds) return false;
-    return results.some(r => {
-      const p = preds.find(p => p.fixture_index === r.fixture_index);
-      return p && p.home_goals === r.home_goals && p.away_goals === r.away_goals;
-    });
+    const { data } = await sb
+      .from('ladder')
+      .select('correct_scores')
+      .eq('player_id', currentUser.id)
+      .maybeSingle();
+    return (data?.correct_scores ?? 0) > 0;
   }
 
   // Manager of the Month is manually awarded, not computed — David inserts
   // the winner's row into `monthly_awards` himself once the month is over
-  // (see ladder/schema.sql for the table + the insert template).
-  const MOTM_MONTH = '2026-08';
+  // (see ladder/schema.sql for the table + the insert template). This badge
+  // icon/copy is specifically "August" MOTM, so the month stays pinned here
+  // rather than being a "current month" pointer someone has to remember to
+  // advance — bumping it would silently lock August's winner back out.
+  const AUGUST_MOTM_MONTH = '2026-08';
 
   async function checkManagerOfTheMonth() {
     if (!currentUser) return false;
     const { data } = await sb
       .from('monthly_awards')
-      .select('player_id')
-      .eq('month', MOTM_MONTH)
+      .select('id')
+      .eq('month', AUGUST_MOTM_MONTH)
+      .eq('player_id', currentUser.id)
       .maybeSingle();
-    return data?.player_id === currentUser.id;
+    return !!data;
   }
+
+  // ── CHALLENGE BADGES (locked until their `check` returns true — not
+  // selectable until then). `unlocked` starts false and is only ever
+  // re-checked while still false — see openBadgeModal().
+  const CHALLENGE_BADGES = [
+    { id: 'icon-offthemark', name: 'Off the Mark',          desc: 'First Win',                     path: '../assets/badges/icons/offthemark.svg', unlocked: false, check: checkOffTheMark },
+    { id: 'icon-august',     name: 'Manager of the Month',  desc: 'August Manager of the Month',   path: '../assets/badges/icons/august.svg',      unlocked: false, check: checkManagerOfTheMonth },
+  ];
+
+  // Every badge a player could have selected, regardless of which list it
+  // came from — used for the single "what's currently selected" lookup.
+  const SELECTABLE_BADGES = [...ICON_BADGES, ...CHALLENGE_BADGES];
 
   // ── BADGE DEFINITIONS ──
   const BADGES = [
@@ -246,7 +254,7 @@
   // ── TEAM ICON ──
   function renderTeamIcon() {
     const el = document.getElementById('team-icon-display');
-    const icon = ICON_BADGES.find(b => b.id === selectedBadge) || CHALLENGE_BADGES.find(b => b.id === selectedBadge);
+    const icon = SELECTABLE_BADGES.find(b => b.id === selectedBadge);
     if (icon) {
       el.innerHTML = `<img src="${icon.path}" alt="${icon.name}" class="team-icon-img">`;
     } else {
@@ -255,60 +263,52 @@
   }
 
   // ── BADGE MODAL ──
-  function renderChallengeGrid() {
-    const challengeGrid = document.getElementById('challenge-grid');
-    challengeGrid.innerHTML = '';
-    CHALLENGE_BADGES.forEach(badge => {
-      const div = document.createElement('div');
-      div.className = 'badge-item' + (badge.unlocked ? ' earned' : ' locked');
-      div.innerHTML = `
-        <img src="${badge.path}" alt="${badge.name}" class="badge-icon-img">
-        <div class="badge-name">${badge.name}</div>
-        <div class="badge-desc">${badge.desc}</div>
-      `;
-      if (badge.unlocked) {
-        const isSelected = selectedBadge === badge.id;
-        if (isSelected) div.classList.add('selected');
-        div.addEventListener('click', () => {
-          selectedBadge = badge.id;
-          renderTeamIcon();
-          closeBadgeModal();
-        });
-      }
-      challengeGrid.appendChild(div);
-    });
-  }
-
-  async function openBadgeModal() {
-    const grid = document.getElementById('badge-grid');
-    grid.innerHTML = '';
-    ICON_BADGES.forEach(badge => {
-      const isSelected = selectedBadge === badge.id;
-      const div = document.createElement('div');
-      div.className = 'badge-item earned' + (isSelected ? ' selected' : '');
-      div.innerHTML = `
-        <img src="${badge.path}" alt="${badge.name}" class="badge-icon-img">
-        <div class="badge-name">${badge.name}</div>
-      `;
+  // Shared by both grids: ICON_BADGES are always unlocked (always earned),
+  // CHALLENGE_BADGES only once their `unlocked` flag is true.
+  function renderBadgeItem(container, badge, unlocked) {
+    const div = document.createElement('div');
+    div.className = 'badge-item' + (unlocked ? ' earned' : ' locked');
+    div.innerHTML = `
+      <img src="${badge.path}" alt="${badge.name}" class="badge-icon-img">
+      <div class="badge-name">${badge.name}</div>
+      ${badge.desc ? `<div class="badge-desc">${badge.desc}</div>` : ''}
+    `;
+    if (unlocked) {
+      if (selectedBadge === badge.id) div.classList.add('selected');
       div.addEventListener('click', () => {
         selectedBadge = badge.id;
         renderTeamIcon();
         closeBadgeModal();
       });
-      grid.appendChild(div);
-    });
+    }
+    container.appendChild(div);
+  }
 
+  function renderBadgeGrid(gridId, badges, unlockedFn) {
+    const grid = document.getElementById(gridId);
+    grid.innerHTML = '';
+    badges.forEach(badge => renderBadgeItem(grid, badge, unlockedFn(badge)));
+  }
+
+  function renderChallengeGrid() {
+    renderBadgeGrid('challenge-grid', CHALLENGE_BADGES, b => b.unlocked);
+  }
+
+  async function openBadgeModal() {
+    renderBadgeGrid('badge-grid', ICON_BADGES, () => true);
     renderChallengeGrid();
 
     document.getElementById('badge-modal').classList.add('open');
     document.querySelector('#badge-modal .modal-close').focus();
 
-    // Unlock state is checked fresh every time the modal opens rather than
-    // cached, so it reflects results/awards entered since the last visit.
-    const [offTheMark, motm] = await Promise.all([checkOffTheMark(), checkManagerOfTheMonth()]);
-    CHALLENGE_BADGES.find(b => b.id === 'icon-offthemark').unlocked = offTheMark;
-    CHALLENGE_BADGES.find(b => b.id === 'icon-august').unlocked = motm;
-    renderChallengeGrid();
+    // A challenge badge can only go locked -> unlocked, never back, so once
+    // unlocked there's no need to keep re-querying it on every subsequent
+    // modal open — only the ones still locked get checked.
+    const stillLocked = CHALLENGE_BADGES.filter(b => !b.unlocked);
+    if (stillLocked.length > 0) {
+      await Promise.all(stillLocked.map(async badge => { badge.unlocked = await badge.check(); }));
+      renderChallengeGrid();
+    }
   }
 
   function closeBadgeModal() {

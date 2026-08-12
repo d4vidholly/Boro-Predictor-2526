@@ -107,7 +107,7 @@
       </div>
 
       <div class="prob-pct-row">
-        <span class="prob-chip prob-soon" id="prob-chip">Odds coming soon</span>
+        <span class="prob-chip" id="prob-chip" style="background:var(--gray);color:#999">Odds coming soon</span>
       </div>
       <div class="prob-track"><div class="prob-fill" id="prob-fill" style="width:0%"></div></div>
       <p class="prob-note">Based on betting market odds · Strong is typically the top couple of scorelines · Long Shot &lt;2% · Fair Chance 2–6% · Good Chance 6–12% · Strong 12%+</p>
@@ -274,22 +274,10 @@
     false, true,  false, true,  true,  false
   ];
 
-  function calcPts(scores, idxs) {
-    let pts = 0;
-    idxs.forEach(i => {
-      if (!scores[i]) return;
-      const boro = BORO_HOME[i] ? scores[i].home : scores[i].away;
-      const opp  = BORO_HOME[i] ? scores[i].away : scores[i].home;
-      if (boro > opp)        pts += 3;
-      else if (boro === opp) pts += 1;
-    });
-    return pts;
-  }
-
   // ── FAN PROFILE ──
   // Static placeholder until September — needs a handful of results in
   // before Pessimist/Realist/Optimist means anything.
-  async function buildProfile() {
+  function buildProfile() {
     const el = document.getElementById('profile-content');
     el.innerHTML = '<div class="profile-empty">Fan Profile goes live in September, once enough results are in.</div>';
   }
@@ -441,18 +429,30 @@
   // Reads from the `odds` table, populated server-side by the sync-odds
   // Edge Function (see supabase/functions/sync-odds). No odds API call
   // ever happens from the browser.
+  //
+  // Tier colours live here as data (same pattern as TEAM_COLORS, applied via
+  // inline style) rather than as parallel CSS class families keyed off a
+  // string — a renamed tier can't silently desync the chip from the bar.
+  const PROB_TIERS = {
+    soon:   { chipBg: 'var(--gray)', chipColor: '#999',       barColor: 'var(--gray)' },
+    long:   { text: 'Long Shot',   fillPct: 20, chipBg: '#fde8ec', chipColor: 'var(--red)', barColor: 'var(--red)' },
+    fair:   { text: 'Fair Chance', fillPct: 40, chipBg: '#ffedd5', chipColor: '#c2410c',    barColor: '#ea580c' },
+    good:   { text: 'Good Chance', fillPct: 60, chipBg: '#fef3c7', chipColor: '#b45309',    barColor: '#d97706' },
+    strong: { text: 'Strong',      fillPct: 80, chipBg: '#e6f9ed', chipColor: '#2e7d47',    barColor: '#2e7d47' },
+  };
+
   async function buildBookies(nextFixture) {
     const labelEl = document.getElementById('prob-match-label');
     const scoreEl = document.getElementById('prob-scoreline');
     const chipEl  = document.getElementById('prob-chip');
     const fillEl  = document.getElementById('prob-fill');
 
-    // tierKey drives both the chip (.prob-${key}) and the bar fill
-    // (.prob-fill-${key}) so they can never fall out of sync with each other.
     function setState(tierKey, chipText, fillPct) {
-      chipEl.className = `prob-chip prob-${tierKey}`;
+      const tier = PROB_TIERS[tierKey];
+      chipEl.style.background = tier.chipBg;
+      chipEl.style.color = tier.chipColor;
       chipEl.textContent = chipText;
-      fillEl.className = `prob-fill prob-fill-${tierKey}`;
+      fillEl.style.background = tier.barColor;
       fillEl.style.width = `${fillPct}%`;
     }
 
@@ -495,24 +495,20 @@
 
     const pct = 100 / match.decimal_odds;
 
-    // 4 tiers, thresholds calibrated against real correct-score odds (Boro v
-    // Lincoln: top pick was ~15%, next couple 6-12%, most plausible scorelines
-    // 2-6%, everything else <2%) — not a H/D/A market where probabilities
-    // commonly run much higher. "Strong" is deliberately narrow: typically
-    // only the top one or two scorelines per fixture qualify.
-    //
-    // The bar fill is a purely visual 4-step indicator (20/40/60/80%), not a
-    // literal plot of `pct` — real correct-score probabilities rarely clear
-    // ~20%, so a linear scale left the bar looking near-empty even for the
-    // favourite. No raw number is shown alongside the category — it read as
-    // confusing/redundant next to the tier label.
-    let tierKey, tierText, fillPct;
-    if (pct < 2)       { tierKey = 'long';   tierText = 'Long Shot';   fillPct = 20; }
-    else if (pct < 6)  { tierKey = 'fair';   tierText = 'Fair Chance'; fillPct = 40; }
-    else if (pct < 12) { tierKey = 'good';   tierText = 'Good Chance'; fillPct = 60; }
-    else               { tierKey = 'strong'; tierText = 'Strong';      fillPct = 80; }
+    // Thresholds calibrated against real correct-score odds (Boro v Lincoln:
+    // top pick was ~15%, next couple 6-12%, most plausible scorelines 2-6%,
+    // everything else <2%) — not a H/D/A market where probabilities commonly
+    // run much higher. "Strong" is deliberately narrow: typically only the
+    // top one or two scorelines per fixture qualify. fillPct/text/colours
+    // for each tier live in PROB_TIERS above, not repeated here.
+    let tierKey;
+    if (pct < 2)       tierKey = 'long';
+    else if (pct < 6)  tierKey = 'fair';
+    else if (pct < 12) tierKey = 'good';
+    else               tierKey = 'strong';
 
-    setState(tierKey, tierText, fillPct);
+    const tier = PROB_TIERS[tierKey];
+    setState(tierKey, tier.text, tier.fillPct);
   }
 
   // ── YOUR SEASON ──

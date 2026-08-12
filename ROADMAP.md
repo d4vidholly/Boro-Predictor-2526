@@ -59,6 +59,19 @@
 - Removed the now-empty `coming-soon-wrap`/`coming-soon-blur`/`coming-soon-overlay` scaffolding (Fan Profile was the only live content left inside it) — replaced with a static "More coming soon" banner below the 4 live panels.
 - The full-page gate modal remains disabled, unchanged from 7 Aug — still needs restoring before the page is promoted more heavily.
 
+## Code Review Cleanup (12 August 2026, same-day follow-up)
+
+Ran a 4-angle cleanup review (reuse / simplification / efficiency / altitude) over everything changed in the 12 Aug session above, then applied the fixes:
+
+- `checkOffTheMark()` now reuses the `ladder` VIEW's `correct_scores` column instead of re-deriving it client-side from `predictions` + `results` — same result, one query instead of two plus a manual comparison.
+- `checkManagerOfTheMonth()` now filters on `player_id` + `month` server-side instead of fetching the month's row and comparing client-side; the month constant was renamed `AUGUST_MOTM_MONTH` and documented as permanently fixed to this specific badge, not a pointer to bump monthly (bumping it would have silently re-locked August's winner).
+- `openBadgeModal()` only re-runs a challenge badge's `check()` while it's still locked — an unlock is permanent, so this drops the repeated Supabase round trips (and a locked→unlocked render flash) on every subsequent modal open.
+- The regular icon grid and the Challenges grid now share one `renderBadgeItem`/`renderBadgeGrid` pair instead of two near-duplicate DOM-building blocks; `SELECTABLE_BADGES` replaces the two-array `.find() || .find()` lookup in `renderTeamIcon()`.
+- Bookies' tier colours moved from a fragile pair of matching CSS class families (`.prob-{tier}` / `.prob-fill-{tier}`, silently desyncable by renaming either side) into one `PROB_TIERS` JS object applied via inline style — same pattern Community Split and Most Common Score already use for team colours.
+- Dead code removed: unused `calcPts()` and its now-pointless `async` on `buildProfile()` (analyst/index.html), ~40 lines of unused `.profile-*` CSS left over from the pre-placeholder Fan Profile (analyst/styles.css), one redundant `.badge-item.locked { cursor: default }` rule already covered by the base `.badge-item` rule (account/styles.css).
+
+Not fixed: the pre-existing unused `BADGES` array in `account/index.html` (emoji-based achievement badges, never rendered) models the same "Off the Mark"/"Manager of the Month" concepts a second time — flagged as pre-existing debt from before this session, not introduced by it, left alone.
+
 ## Recent UI Changes (7 August 2026)
 
 **Security**
@@ -206,10 +219,10 @@ Full context on all of these (plus non-panel ideas like monthly skins, head-to-h
 
 The badge picker modal (`account/index.html`) has a "Challenges" section below the regular selectable icon grid:
 
-- **Off the Mark** (`assets/badges/icons/offthemark.svg`) — "First Win". Unlocks **automatically**: `checkOffTheMark()` compares the player's `predictions` against `results` and unlocks on the player's first **exact scoreline** (the 4-point hit per the scoring rules — not just a correct W/D/L). Checked fresh every time the badge modal opens, no caching.
-- **Manager of the Month** (`assets/badges/icons/august.svg`) — "August Manager of the Month". Unlocks **manually, by design** — no "most points in the month" query. New `monthly_awards` table (`month TEXT UNIQUE`, `player_id`) holds one row per month; David inserts the winner himself via SQL Editor once the month is over. RLS only allows authenticated SELECT — no client can write to it. `checkManagerOfTheMonth()` checks the row for `MOTM_MONTH = '2026-08'` (hardcoded — bump this constant for future months).
+- **Off the Mark** (`assets/badges/icons/offthemark.svg`) — "First Win". Unlocks **automatically** on the player's first **exact scoreline** (the 4-point hit per the scoring rules — not just a correct W/D/L). `checkOffTheMark()` reuses the `ladder` VIEW's `correct_scores` column (already computes this per player) rather than re-deriving it client-side from `predictions` + `results`.
+- **Manager of the Month** (`assets/badges/icons/august.svg`) — "August Manager of the Month". Unlocks **manually, by design** — no "most points in the month" query. New `monthly_awards` table (`month TEXT UNIQUE`, `player_id`) holds one row per month; David inserts the winner himself via SQL Editor once the month is over. RLS only allows authenticated SELECT — no client can write to it. `checkManagerOfTheMonth()` filters on `AUGUST_MOTM_MONTH = '2026-08'`, a constant fixed to this specific badge (not a "current month" pointer to bump — this badge/icon is permanently about August, so advancing the constant for a future month's badge would silently re-lock August's winner).
 
-Both checks run in `openBadgeModal()`; the modal opens instantly showing last-known state, then re-renders once the checks resolve.
+Each `CHALLENGE_BADGES` entry carries its own `check` function; `openBadgeModal()` only re-runs `check()` for badges still locked (an unlock is permanent, so no need to re-query an already-earned one on every subsequent open) and shares one render helper with the regular icon grid.
 
 ⬜ **`monthly_awards` needs to actually be created in Supabase** — it's documented in `ladder/schema.sql` but that file isn't auto-applied; run the `CREATE TABLE` + RLS policy manually (same pattern as the `odds` table gap from earlier today).
 
