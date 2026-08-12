@@ -166,10 +166,28 @@ SELECT
         OR (pred.home_goals = pred.away_goals AND r.home_goals = r.away_goals)
       THEN 1 ELSE 0
     END
-  ), 0)                                         AS correct_results
+  ), 0)                                         AS correct_results,
+  -- Boro's own goals correctly predicted, regardless of whether Boro was
+  -- home or away for that fixture (f.is_boro_home picks the right column).
+  COALESCE(SUM(
+    CASE
+      WHEN f.is_boro_home     AND pred.home_goals = r.home_goals THEN 1
+      WHEN NOT f.is_boro_home AND pred.away_goals = r.away_goals THEN 1
+      ELSE 0
+    END
+  ), 0)                                         AS goals_for,
+  -- Opposition's goals correctly predicted (the other column from goals_for).
+  COALESCE(SUM(
+    CASE
+      WHEN f.is_boro_home     AND pred.away_goals = r.away_goals THEN 1
+      WHEN NOT f.is_boro_home AND pred.home_goals = r.home_goals THEN 1
+      ELSE 0
+    END
+  ), 0)                                         AS goals_away
 FROM public.players p
 LEFT JOIN public.predictions pred ON pred.player_id = p.id
 LEFT JOIN public.results r        ON r.fixture_index = pred.fixture_index
+LEFT JOIN public.fixtures f       ON f.fixture_index = pred.fixture_index
 GROUP BY p.id, p.name, p.team_name
 ORDER BY points DESC NULLS LAST, correct_scores DESC NULLS LAST, correct_results DESC NULLS LAST, p.name ASC;
 
