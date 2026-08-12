@@ -6,7 +6,7 @@
 |---|---|
 | ✅ ~Mid June 2026 | EFL Championship 2026/27 fixtures released |
 | ✅ 25 June 2026 | Fixture data live, predictor page open |
-| 14 August 2026 | Season starts — predictions locked |
+| 15 August 2026, 00:00 GMT | Season starts — predictions locked (matches `PREDICTIONS_DEADLINE` / the `predictions` table RLS deadline exactly) |
 
 ---
 
@@ -53,7 +53,7 @@
 
 **Account page**
 - Added a locked "Challenges" section to the badge picker modal — Off the Mark ("First Win") and Manager of the Month ("August Manager of the Month"), using new icon assets (`assets/badges/icons/offthemark.svg`, `august.svg`), styled with the `.badge-item.locked` state (already existed in CSS, was never wired up until now).
-- ⬜ Neither challenge badge has real unlock logic yet — both permanently show locked until a "first correct result" query and an "August points leader" query are built.
+- Unlock logic wired up same day — see "Account Page — Challenges" below for the current (post-code-review) implementation.
 
 **Analyst page structure**
 - Removed the now-empty `coming-soon-wrap`/`coming-soon-blur`/`coming-soon-overlay` scaffolding (Fan Profile was the only live content left inside it) — replaced with a static "More coming soon" banner below the 4 live panels.
@@ -71,6 +71,26 @@ Ran a 4-angle cleanup review (reuse / simplification / efficiency / altitude) ov
 - Dead code removed: unused `calcPts()` and its now-pointless `async` on `buildProfile()` (analyst/index.html), ~40 lines of unused `.profile-*` CSS left over from the pre-placeholder Fan Profile (analyst/styles.css), one redundant `.badge-item.locked { cursor: default }` rule already covered by the base `.badge-item` rule (account/styles.css).
 
 Not fixed: the pre-existing unused `BADGES` array in `account/index.html` (emoji-based achievement badges, never rendered) models the same "Off the Mark"/"Manager of the Month" concepts a second time — flagged as pre-existing debt from before this session, not introduced by it, left alone.
+
+## Ladder, Dashboard & Predict Testing (12 August 2026, same-day follow-up)
+
+End-to-end tested the full results pipeline by manually inserting fake results (fixture 0: 1-0, fixture 1: 2-2, fixture 2: 0-0) via SQL Editor, checking every page that reads from `results`, then deleting them again (`DELETE FROM public.results;`) to put the app back to its real pre-season state. Found and fixed several real bugs this surfaced:
+
+**Ladder**
+- `ladder/index.html` keeps its own separate copy of `ICON_BADGES` to resolve a player's saved `team_name` into a badge SVG — it never got the two new Challenges icons (`icon-offthemark`, `icon-august`) added to `account/index.html`'s copy, so a player with either selected showed an empty badge slot on the ladder despite it working fine in account. Added both.
+- Form boxes (`.form-box` per row) were always empty — the `ladder` VIEW never carried a `form` column at all, so `renderForm()` received `undefined` every time regardless of results. Built client-side instead: `fixturePoints()` applies the same 4/1/1/1 scoring rule as the VIEW, `buildFormByPlayer()` orders each player's played fixtures newest-first (leftmost box = latest result) and maps them to points. Every played fixture gets an entry for every player on the ladder — a missing prediction counts as 0 (red), it doesn't just vanish from the form.
+- Added `p.name ASC` as the final `ORDER BY` tiebreaker in the `ladder` VIEW — previously points/correct_scores/correct_results could tie with no further tiebreaker, giving unstable ordering.
+- Added `goals_for`/`goals_away` to the `ladder` VIEW — never computed at all before, always showed `—`. Computed **Boro-relative** (not literal home/away columns) via a join on `fixtures.is_boro_home`, so it's correct whether Boro was home or away for that fixture.
+- All of the above required live `CREATE OR REPLACE VIEW public.ladder` runs in Supabase SQL Editor — `ladder/schema.sql` documents the current definition but isn't auto-applied, same gap as `odds`/`monthly_awards` earlier.
+
+**Dashboard**
+- `loadDashboard()` had `const fixtureIndex = 0` — hardcoded, not date-based, not results-based, always showed fixture 0 regardless of anything, contrary to what this file already (inaccurately) documented. Replaced with `getNextFixtureIndex()`: lowest `fixture_index` with no row in `results`, same approach as `analyst/index.html`'s `getNextFixture()`. "Your Prediction" automatically followed since it already read off the same `fixtureIndex` variable. Wired up the previously-unreachable `#all-done` "Season Complete" state for once every fixture has a result.
+- Replaced the old plain-text "Previous Result"/"Previous Score" panels with a single "Last Match" card (badges + score + points-earned banner), styled like "Your Prediction" and moved below it. `pts-zero` uses `--black` rather than `--red-dark` on this specific card, since the card's own background is already `--red-dark`.
+
+**Predict page**
+- Added a bottom-of-card points banner (green 4pt / gold 1-3pt / black-red 0pt) shown only post-deadline, for fixtures with a result.
+- Score buttons (`.change-score`) now disable once `PREDICTIONS_DEADLINE` passes — nothing entered after that can ever be saved (blocked both client-side and by `predictions` RLS), so they shouldn't invite an action that goes nowhere.
+- The predicted-result colour tab (`.result-tab` / `updateFixtureColor()`) was briefly removed entirely when the points banner was added, then restored — it's meant to stay live (predicted result) right up to the deadline, then get hidden via `body.predictions-locked` in favour of the points banner (actual result), not be deleted outright.
 
 ## Recent UI Changes (7 August 2026)
 
@@ -212,6 +232,18 @@ Not committed, no build order decided. Logged here so they're considered alongsi
 - **Predicted final table** — aggregate every player's `predictions` into a consensus Boro finish position.
 
 Full context on all of these (plus non-panel ideas like monthly skins, head-to-head mode) is under "Premium Analyst Mode" below.
+
+---
+
+## Ladder Page — Current Build (updated 12 Aug 2026)
+
+`ladder/index.html`, backed by the `ladder` VIEW in Supabase (documented in `ladder/schema.sql`, not auto-applied — changes need a manual `CREATE OR REPLACE VIEW` in SQL Editor). Full pipeline confirmed working via a manual end-to-end test (fake results, checked, deleted).
+
+- **Points / correct scores / correct results** — computed by the VIEW directly from `predictions` + `results`, per the standard 4/1/1/1 scoring rule.
+- **GF / GA columns** — Boro-relative (not literal home/away columns), via a join on `fixtures.is_boro_home` so it's correct regardless of which side Boro was on for that fixture.
+- **Tiebreak order** — `points DESC, correct_scores DESC, correct_results DESC, name ASC`.
+- **Form boxes** — *not* in the VIEW at all; built client-side in `ladder/index.html` (`buildFormByPlayer()`), newest result leftmost, red for a missing prediction on a played fixture (not just skipped).
+- **Badge icons** — `ladder/index.html` keeps its own copy of `ICON_BADGES` (separate from `account/index.html`'s copy, no shared module — each page is self-contained per `CLAUDE.md`). Any new icon badge added to account's badge picker needs manually mirroring here too, or it'll render as an empty slot on the ladder despite saving fine in account.
 
 ---
 
