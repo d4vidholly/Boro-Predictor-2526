@@ -79,7 +79,11 @@ Once matches are played, add results directly in Supabase:
 3. Enter `fixture_index` (0–45, matches the order in `fixtures` table), `home_goals`, `away_goals`
 4. Save — the `ladder` view recalculates automatically for all 24 players
 
-> **Fixture index reference:** fixture 0 = Boro vs Swansea (9 Aug). See `fixtures` table for the full list.
+> **Fixture index reference:** fixture 0 = Boro vs Lincoln City (15 Aug). See `predict/index.html`'s `fixtures` array for the full list.
+
+**Which tables you can edit directly vs. need SQL for:**
+- `results`, `settings`, `monthly_awards` — plain 1-row edits, just use Table Editor → Insert/Edit row directly, no SQL needed.
+- `odds` — many rows per fixture, needs decimal-odds conversion and the Oddschecker column flip — ask Claude to write the upsert SQL for these rather than hand-entering in the grid.
 
 ---
 
