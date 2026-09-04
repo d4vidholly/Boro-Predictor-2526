@@ -91,6 +91,12 @@ td.center { text-align: center; }
 footer { padding: 1.5rem 1rem; margin-top: 0; }
 
 /* ── SCORING NOTE ── */
+.last-updated {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 0.4rem;
+}
+
 .scoring-note {
   font-size: 0.8rem;
   color: rgba(255,255,255,0.5);

@@ -39,6 +39,8 @@
       </div>
     </div>
 
+    <p class="last-updated">Ladder last updated: 4/9/26</p>
+
     <p class="scoring-note">
       <strong>4 pts</strong> exact scoreline &nbsp;·&nbsp;
       <strong>1 pt</strong> correct result (W/D/L) &nbsp;·&nbsp;
@@ -171,7 +173,7 @@
     function renderLadder(rows) {
       const tbody  = document.getElementById('ladder-body');
       const table  = document.getElementById('ladder-table');
-      const total  = Math.max(rows.length, 24);
+      const total  = rows.length;
       tbody.innerHTML = '';
 
       for (let i = 0; i < total; i++) {
